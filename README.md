@@ -9,7 +9,9 @@ This class can be used for:
 6) plotting
 7) export
 
-*** Examples ***
+For using the N490 class you need to extract the [Data](https://kth.box.com/s/9dsamj32fh490df38qx6temd8agwd6hm) folder in the project's directory
+
+### *** Examples ***
 
 ### init N490 object and prepare network for year 2018 (some elements removed)
 pandas DataFrames are created: bus, gen, line, link, trafo and farms (wind farms)
@@ -76,4 +78,6 @@ Skicka länk till lsod med muni load
 sommartid fel?
 
 nuc från entso-e 
-    
+
+#### Notes
+An archive of more additional resources can be found [here](https://kth.box.com/s/ujly5s15dd5xkhdxk59r04ulks6mokrr) containing various other scripts and information  
