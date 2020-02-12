@@ -16,6 +16,7 @@ For using the N490 class you need to extract the [Data](https://kth.box.com/s/9d
 ### init N490 object and prepare network for year 2018 (some elements removed)
 pandas DataFrames are created: bus, gen, line, link, trafo and farms (wind farms)
 ```python
+from nordic490 import N490
 m = N490(year=2018) 
 print(m.bus.iloc[0,:]) # first bus
 m.save_xlsx('test.xlsx') # save to excel 
@@ -23,6 +24,7 @@ m.save_xlsx('test.xlsx') # save to excel
 
 ### Make a case and solve DCPF
 ```python
+from nordic490 import N490
 m = N490(year=2018)
 m.branch_params() # simple assumptions on R, X and B
 load, gen, link = m.get_measurements('20180120:18') # download data for a certain hour
@@ -34,19 +36,24 @@ m.save_mat('test.mat') # save in Matpower format
 
 ### Time series
 ```python
+from nordic490 import N490, plt
 m = N490(year=2018,set_branch_params=True)
 m.time_series('20180101:00','20180107:23') # download one week of data + DCPF for each hour
 ac = m.compare_flows(plot=False) # get AC interarea flows (measured and simulated)
 ac['SE1-SE2'].plot()
+plt.show()
 ```
 ### Deafult network plots
 ```python
+from nordic490 import N490, plt
 m = N490(year=None,set_branch_params=True) # year=None -> read all data (also uc and dismantled)
 m.simple_plot(bus=[6139],line=[2300]) # identify certain lines, buses or links
 m.plot() # default interactive map (click on objects for info)
+plt.show()
 ```
 ### Two custom maps
 ```python
+from nordic490 import N490, np, Map
 m = N490(year=2018,set_branch_params=True)
 load, gen, link = m.get_measurements('20180120:18')
 m.distribute_power(load,gen,link)
