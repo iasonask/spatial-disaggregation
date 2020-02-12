@@ -88,3 +88,9 @@ nuc från entso-e
 
 #### Notes
 An archive of more additional resources can be found [here](https://kth.box.com/s/ujly5s15dd5xkhdxk59r04ulks6mokrr) containing various other scripts and information  
+
+For installing all required packages automatically you can:
+
+```bash
+pip install -r requirements.txt
+```
