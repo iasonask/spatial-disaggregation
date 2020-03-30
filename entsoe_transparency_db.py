@@ -8,7 +8,7 @@
 
     cap_per_type(TEXT year, TEXT area, TEXT type, FLOAT cap)
         - installed capacities, note that data for SE regions is missing
-        from entsoe database
+s        from entsoe database
 
     gen_per_type(TEXT time, TEXT area, TEXT type, FLOAT gen)
         - actual generation for different production types from
@@ -79,7 +79,7 @@ tbidz_key = {
     'PL': '10YPL-AREA-----S',
 }
 
-# construct reverse key
+# construt reverse key
 tbidz_rkey = {}
 for f in tbidz_key:
     tbidz_rkey[tbidz_key[f]] = f
