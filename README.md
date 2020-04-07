@@ -43,6 +43,22 @@ ac = m.compare_flows(plot=False) # get AC interarea flows (measured and simulate
 ac['SE1-SE2'].plot()
 plt.show()
 ```
+### Calculating error
+```python
+import numpy as np
+from nordic490 import N490, plt
+m = N490(year=2018,set_branch_params=True)
+m.time_series('20180101:00','20180107:23') # download one week of data + DCPF for each hour
+ac = m.compare_flows(plot=False)
+measured = ac.iloc[:, ac.columns.get_level_values(1)=='Measured'];
+modelled = ac.iloc[:, ac.columns.get_level_values(1)=='Modelled'];
+level_one = measured.columns.get_level_values(0).astype(str);
+measured.columns=level_one;
+level_two = modelled.columns.get_level_values(0).astype(str);
+modelled.columns=level_two;
+error = np.square(measured-modelled).mean();
+print(error) 
+```
 ### Deafult network plots
 ```python
 from nordic490 import N490, plt
