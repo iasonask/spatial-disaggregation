@@ -107,7 +107,7 @@ class N490:
             self.bus.loc[self.bus.bidz == b, 'load_share'] *= 1 / sum_share
 
     def branch_params(self):
-        """ Make some assumtions on branch parameters for lines and trafos.
+        """ Make some assumptions on branch parameters for lines and transformers.
         Note: X and B are per phase!
         """
         ohm_per_km = 0.2  # for lines
@@ -127,7 +127,7 @@ class N490:
         line.loc[comp, 'X'] *= compensate[0]
         line['B'] = S_per_km * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
 
-        # trafos
+        # transformers
         v0 = self.bus.loc[trafo.bus0, 'Vbase']  # voltage at bus0
         v1 = self.bus.loc[trafo.bus1, 'Vbase']  # voltage at bus1
         v0_array = [_ for _ in v0]
@@ -283,7 +283,7 @@ class N490:
         return load, gen, link
 
     def time_series(self, start, stop):
-        """ Download hourly time series between start and stop and run dcpf for each hour."""
+        """ Download hourly time series between start and stop and run dc power flow for each hour."""
 
         print('\n*** Downloading data from Entso-E and Nordpool ***')
         load, gen, link = self.get_measurements(start, stop)
