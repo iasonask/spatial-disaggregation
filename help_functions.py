@@ -51,7 +51,7 @@ def read_excel_table(file, worksheet=None, headers=[], srow=1):
     the excel file contains headers in the first row.
     Inputs:
         file - complete file path
-        worksheet - name of worksheed to read
+        worksheet - name of worksheet to read
         headers - list of headers, if different from headers specified in sheet
         srow - starting row
     Outputs:
