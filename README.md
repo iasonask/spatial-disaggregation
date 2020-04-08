@@ -56,8 +56,12 @@ level_one = measured.columns.get_level_values(0).astype(str);
 measured.columns=level_one;
 level_two = modelled.columns.get_level_values(0).astype(str);
 modelled.columns=level_two;
-error = np.square(measured-modelled).mean();
-print(error) 
+MAE = np.abs(measured-modelled).mean() # mean absolute error
+print(MAE)
+MAPE = np.abs((measured-modelled)/measured).mean() # mean absolute percentage error
+print(MAPE)
+RSME = np.sqrt(np.square(measured-modelled).mean()); # root mean square error
+print(RSME) 
 ```
 ### Deafult network plots
 ```python
