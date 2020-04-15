@@ -43,25 +43,31 @@ ac = m.compare_flows(plot=False) # get AC interarea flows (measured and simulate
 ac['SE1-SE2'].plot()
 plt.show()
 ```
-### Calculating error
+### Calculate Errors Method 1
+```python
+from nordic490 import N490, plt
+m = N490(year=2018,set_branch_params=True)
+m.time_series('20180101:00','20180107:23') # download one week of data + DCPF for each hour
+error = m.calculate_errors() # to calculate error in 'n'th timestep, pass n as argument  
+print(error)
+```
+
+### Calculating error Method 2
 ```python
 import numpy as np
 from nordic490 import N490, plt
 m = N490(year=2018,set_branch_params=True)
 m.time_series('20180101:00','20180107:23') # download one week of data + DCPF for each hour
 ac = m.compare_flows(plot=False)
-measured = ac.iloc[:, ac.columns.get_level_values(1)=='Measured'];
-modelled = ac.iloc[:, ac.columns.get_level_values(1)=='Modelled'];
-level_one = measured.columns.get_level_values(0).astype(str);
-measured.columns=level_one;
-level_two = modelled.columns.get_level_values(0).astype(str);
-modelled.columns=level_two;
+measured = ac.iloc[:, ac.columns.get_level_values(1)=='Measured']
+modelled = ac.iloc[:, ac.columns.get_level_values(1)=='Modelled']
+level_one = measured.columns.get_level_values(0).astype(str)
+measured.columns=level_one
+level_two = modelled.columns.get_level_values(0).astype(str)
+modelled.columns=level_two
 MAE = np.abs(measured-modelled).mean() # mean absolute error
-print(MAE)
 MAPE = np.abs((measured-modelled)/measured).mean() # mean absolute percentage error
-print(MAPE)
-RSME = np.sqrt(np.square(measured-modelled).mean()); # root mean square error
-print(RSME) 
+RMSE = np.sqrt(np.square(measured-modelled).mean()) # root mean square error
 ```
 ### Deafult network plots
 ```python
