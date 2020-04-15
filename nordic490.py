@@ -47,7 +47,8 @@ class N490:
         self.country = ['SE', 'NO', 'FI', 'DK']
         self.gen_type = ['Nuclear', 'Hydro', 'Thermal', 'Wind']  # Main gen types
         self.load_data(topology_file)  # load network data from xlsx, npy etc.
-        self.prepare_network(year)  # possibly remove too new or old data, check islands
+        #self.prepare_network(year)  # possibly remove too new or old data, check islands
+        self.modify_network(year)  # remove too new or old data, check islands and update loads in SE
         self.flow_measured = []  # store measured AC flows between areas
         self.flow_modelled = []  # store modelled -"- from e.g. dcpf()
         self.solved_mpc = []  # store solved cases
@@ -73,6 +74,7 @@ class N490:
             print('loading from .mat not implemented yet')
 
     def prepare_network(self, year):
+
         """ Remove dismantled or not yet constructed equipment, check islands etc. """
         if year is True:
             year = pd.Timestamp.now().year
@@ -105,6 +107,67 @@ class N490:
         for b in self.bidz:
             sum_share = self.bus.loc[self.bus.bidz == b, 'load_share'].sum()
             self.bus.loc[self.bus.bidz == b, 'load_share'] *= 1 / sum_share
+
+
+    def modify_network(self, year):
+
+        """ Function to improve load distribution at buses mainly in Sweden with energy consumption
+        data from SCB"""
+
+        "Resetting the assigned loads in SE "
+        self.bus.loc[self.bus.country == 'SE', 'load_share'] = 0
+
+        "Read the load file for Sweden"
+        Sl = pd.read_excel("Book1.xlsx", index_col=0)
+
+        "Remove dismantled or not yet constructed equipment, check islands etc."
+        if year is True:
+            year = pd.Timestamp.now().year
+
+        # remove equipment
+        if year is not None:
+            for df in self.dfs:
+                data = getattr(self, df)
+                data.drop(data[data.uc > year].index, inplace=True)  # not yet constructed
+                data.drop(data[(data.uc < 0) & (-data.uc <= year)].index, inplace=True)  # dismantled
+
+        # remove island buses
+        ibus = self.find_islands()
+        if len(ibus) > 0:
+            self.bus.drop(ibus, axis=0, inplace=True)
+            if warnings:
+                print('The following island buses were removed: %s' % str(ibus))
+
+        # Update the loads in Sweden
+        loc = cdist(arr(Sl.iloc[:, mult_ind(['x', 'y'], list(Sl))]), arr(self.bus.loc[:, ['x', 'y']]))
+        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
+        Sl['bus'] = pos
+
+        for i, row1 in self.bus.iterrows():
+            for j, row2 in Sl.iterrows():
+                if row1['country'] == 'SE':
+                    if row2['bus'] == i:
+                        self.bus.loc[i, 'load_share'] += row2['Load']
+
+        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
+
+        # wind power
+        f = self.farms
+        f.drop(f[(f.status > 1) & ~f.uc].index, inplace=True)
+
+        # existing wind farms on removed buses (iloc) -> find closest existing bus
+        ind = find(np.isnan(mult_ind(f.bus, self.bus.index)))
+        d = cdist(arr(f.iloc[ind, mult_ind(['x', 'y'], list(f))]), arr(self.bus.loc[:, ['x', 'y']]))
+        bus = arr(self.bus.index[np.argmin(d, axis=1)])
+        f.iloc[ind, list(f).index('bus')] = bus
+
+        # update load_shares
+        for b in self.bidz:
+            sum_share = self.bus.loc[self.bus.bidz == b, 'load_share'].sum()
+            self.bus.loc[self.bus.bidz == b, 'load_share'] *= 1 / sum_share
+
+        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
+
 
     def branch_params(self):
         """ Make some assumptions on branch parameters for lines and transformers.
@@ -333,7 +396,7 @@ class N490:
                     print('Not enough wind capacity in %s (%d vs %d MW)' % (b, available, gen.at[time, (b, 'Wind')]))
 
         # Load including wind (+PV) and negative load
-        self.bus['load'] = 0.
+        self.bus['load'] = 0
         for i, row in self.farms.iterrows():  # wind as negative load
             self.bus.at[int(row.bus), 'load'] -= row.P
         for b in self.bidz:
@@ -406,7 +469,7 @@ class N490:
         return mpc
 
     def dcpf(self, time=0, mpc=None, save2network=True):
-        """ Run DC power flow. """
+        """ Run DC power flow """
 
         if type(time) is int:
             time = self.flow_modelled.index[time]
@@ -433,8 +496,8 @@ class N490:
             self.mpc2network()  # add parameters to network (flows, voltage angle etc.)
 
     def compare_flows(self, n=None, plot=True):
-        """ Compare flow_measured with flow_modelled.
-        specify n to look at timestep n, otherwise all timesteps
+        """Compare flow_measured with flow_modelled
+        Specify n to look at timestep n, otherwise all timesteps
         plot False -> return results dataframe"""
 
         meas = self.flow_measured
@@ -464,6 +527,30 @@ class N490:
                 plt.show()
         if not plot:
             return res
+
+    def calculate_errors(self, n=None):
+        """ Compare flow_measured with flow_modelled and calculate the error values """
+        "Specify n to look at timestep n, otherwise all returns for all timesteps"
+
+        meas = self.flow_measured
+        sim = self.flow_modelled
+
+        if len(meas) == 1:
+            n = 0
+
+        if type(n) is int:
+            err = pd.DataFrame(index=list(sim), columns=['MAE', 'MAPE', 'RMSE'])
+            err['MAE'] = np.abs(meas.iloc[n, :].values - sim.iloc[n, :].values)
+            err['MAPE'] = np.abs((meas.iloc[n, :].values - sim.iloc[n, :].values)/meas.iloc[n, :].values)
+            err['RMSE'] = np.sqrt(np.square(meas.iloc[n, :].values - sim.iloc[n, :].values))
+
+        else:
+            err = pd.DataFrame(index=list(sim), columns=['MAE', 'MAPE', 'RMSE'])
+            err['MAE'] = np.abs(meas - sim).mean()
+            err['MAPE'] = np.abs((meas - sim) / meas).mean()
+            err['RMSE'] = np.sqrt(np.square(meas - sim).mean())
+
+        return err
 
     def save_xlsx(self, file_name):
         """ Export data to Excel (different sheets for bus,gen,line...). """
