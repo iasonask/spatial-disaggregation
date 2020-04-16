@@ -141,13 +141,25 @@ class N490:
         # Update the loads in Sweden
         loc = cdist(arr(Sl.iloc[:, mult_ind(['x', 'y'], list(Sl))]), arr(self.bus.loc[:, ['x', 'y']]))
         pos = arr(self.bus.index[np.argmin(loc, axis=1)])
+
+        " To limit distribution of loads to within  Sweden"
+        j=1
+        for i in range(len(pos)):
+            while j < 1000:
+                if (self.bus.at[pos[i], 'country'] == 'SE'):
+                    break
+                else:
+                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
+                    j += 1
         Sl['bus'] = pos
 
+        # Update load_share with new data
         for i, row1 in self.bus.iterrows():
             for j, row2 in Sl.iterrows():
                 if row1['country'] == 'SE':
                     if row2['bus'] == i:
                         self.bus.loc[i, 'load_share'] += row2['Load']
+
 
         self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
 
