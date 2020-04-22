@@ -4,6 +4,10 @@ Created on Tue Oct 23 12:48:13 2018
 
 @author: jolauson
 
+Edited on
+
+@by : Aravind S Kumar
+
 """
 
 import os
@@ -48,6 +52,7 @@ class N490:
         self.gen_type = ['Nuclear', 'Hydro', 'Thermal', 'Wind']  # Main gen types
         self.load_data(topology_file)  # load network data from xlsx, npy etc.
         #self.prepare_network(year)  # possibly remove too new or old data, check islands
+        #self.test = []
         self.modify_network(year)  # remove too new or old data, check islands and update loads in SE
         self.flow_measured = []  # store measured AC flows between areas
         self.flow_modelled = []  # store modelled -"- from e.g. dcpf()
@@ -114,12 +119,6 @@ class N490:
         """ Function to improve load distribution at buses mainly in Sweden with energy consumption
         data from SCB"""
 
-        "Resetting the assigned loads in SE "
-        self.bus.loc[self.bus.country == 'SE', 'load_share'] = 0
-
-        "Read the load file for Sweden"
-        Sl = pd.read_excel("Book1.xlsx", index_col=0)
-
         "Remove dismantled or not yet constructed equipment, check islands etc."
         if year is True:
             year = pd.Timestamp.now().year
@@ -138,11 +137,19 @@ class N490:
             if warnings:
                 print('The following island buses were removed: %s' % str(ibus))
 
-        # Update the loads in Sweden
+
+        # Improve load distribution in Sweden
+        "Resetting the assigned loads in SE "
+        self.bus.loc[self.bus.country == 'SE', 'load_share'] = 0
+
+        "Read the load file for Sweden"
+        Sl = pd.read_excel("Sweden.xlsx", index_col=0)
+
+        # To Update the loads in Sweden
         loc = cdist(arr(Sl.iloc[:, mult_ind(['x', 'y'], list(Sl))]), arr(self.bus.loc[:, ['x', 'y']]))
         pos = arr(self.bus.index[np.argmin(loc, axis=1)])
 
-        " To limit distribution of loads to within  Sweden"
+        "To limit distribution of loads to within Sweden"
         j=1
         for i in range(len(pos)):
             while j < 1000:
@@ -160,8 +167,102 @@ class N490:
                     if row2['bus'] == i:
                         self.bus.loc[i, 'load_share'] += row2['Load']
 
+        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
+
+
+        # Improved Load distribution Norway
+        "Resetting the assigned loads in NO "
+        self.bus.loc[self.bus.country == 'NO', 'load_share'] = 0
+
+        "Read the load file for Norway"
+        No = pd.read_excel("Norway.xlsx", index_col=0)
+
+        # Update the loads in Norway
+        loc = cdist(arr(No.iloc[:, mult_ind(['x', 'y'], list(No))]), arr(self.bus.loc[:, ['x', 'y']]))
+        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
+
+        "To limit distribution of loads to within Norway"
+        j = 1
+        for i in range(len(pos)):
+            while j < 1000:
+                if (self.bus.at[pos[i], 'country'] == 'NO'):
+                    break
+                else:
+                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
+                    j += 1
+        No['bus'] = pos
+
+        # Update load_share with new data
+        for i, row1 in self.bus.iterrows():
+            for j, row2 in No.iterrows():
+                if row1['country'] == 'NO':
+                    if row2['bus'] == i:
+                        self.bus.loc[i, 'load_share'] += row2['Load']
 
         self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
+
+        # Improved Load distribution Finland
+        "Resetting the assigned loads in FI "
+        self.bus.loc[self.bus.country == 'FI', 'load_share'] = 0
+
+        "Read the load file for Finland"
+        Fi = pd.read_excel("Finland.xlsx", index_col=0)
+
+        # To Update the loads in Finland
+        loc = cdist(arr(Fi.iloc[:, mult_ind(['x', 'y'], list(Fi))]), arr(self.bus.loc[:, ['x', 'y']]))
+        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
+
+        " To limit distribution of loads to within Finland"
+        j = 1
+        for i in range(len(pos)):
+            while j < 1000:
+                if (self.bus.at[pos[i], 'country'] == 'FI'):
+                    break
+                else:
+                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
+                    j += 1
+        Fi['bus'] = pos
+
+        # Update load_share with new data
+        for i, row1 in self.bus.iterrows():
+            for j, row2 in Fi.iterrows():
+                if row1['country'] == 'FI':
+                    if row2['bus'] == i:
+                        self.bus.loc[i, 'load_share'] += row2['Load']
+
+        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
+
+        # Improved Load distribution Denmark
+        "Resetting the assigned loads in DK "
+        self.bus.loc[self.bus.country == 'DK', 'load_share'] = 0
+
+        "Read the load file for Denmark"
+        Dk = pd.read_excel("Denmark.xlsx", index_col=0)
+
+        # To Update the loads in Denmark
+        loc = cdist(arr(Dk.iloc[:, mult_ind(['x', 'y'], list(Dk))]), arr(self.bus.loc[:, ['x', 'y']]))
+        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
+
+        "To limit distribution of loads to within Denmark"
+        j = 1
+        for i in range(len(pos)):
+            while j < 1000:
+                if (self.bus.at[pos[i], 'country'] == 'DK'):
+                    break
+                else:
+                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
+                    j += 1
+        Dk['bus'] = pos
+
+        # Update load_share with new data
+        for i, row1 in self.bus.iterrows():
+            for j, row2 in Dk.iterrows():
+                if row1['country'] == 'DK':
+                    if row2['bus'] == i:
+                        self.bus.loc[i, 'load_share'] += row2['Load']
+
+        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
+
 
         # wind power
         f = self.farms
@@ -553,13 +654,13 @@ class N490:
         if type(n) is int:
             err = pd.DataFrame(index=list(sim), columns=['MAE', 'MAPE', 'RMSE'])
             err['MAE'] = np.abs(meas.iloc[n, :].values - sim.iloc[n, :].values)
-            err['MAPE'] = np.abs((meas.iloc[n, :].values - sim.iloc[n, :].values)/meas.iloc[n, :].values)
+            err['MAPE'] = np.abs((meas.iloc[n, :].values - sim.iloc[n, :].values)/meas.iloc[n, :].values*100)
             err['RMSE'] = np.sqrt(np.square(meas.iloc[n, :].values - sim.iloc[n, :].values))
 
         else:
             err = pd.DataFrame(index=list(sim), columns=['MAE', 'MAPE', 'RMSE'])
             err['MAE'] = np.abs(meas - sim).mean()
-            err['MAPE'] = np.abs((meas - sim) / meas).mean()
+            err['MAPE'] = np.abs((meas - sim) / meas*100).mean()
             err['RMSE'] = np.sqrt(np.square(meas - sim).mean())
 
         return err

@@ -79,7 +79,9 @@ plt.show()
 ```
 ### Two custom maps
 ```python
-from nordic490 import N490, np, Map
+from nordic490 import N490
+from network_map import Map
+import numpy as np
 m = N490(year=2018,set_branch_params=True)
 load, gen, link = m.get_measurements('20180120:18')
 m.distribute_power(load,gen,link)
