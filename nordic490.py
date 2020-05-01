@@ -18,6 +18,7 @@ from numpy import flatnonzero as find
 from numpy import atleast_1d as arr
 from numpy import concatenate as cat
 import matplotlib.pyplot as plt
+from pypower.runopf import runopf
 from scipy.io import savemat
 from pypower.api import rundcpf, runpf, case118, ppoption
 import nordpool_db as nordpool
@@ -116,8 +117,7 @@ class N490:
 
     def modify_network(self, year):
 
-        """ Function to improve load distribution at buses mainly in Sweden with energy consumption
-        data from SCB"""
+        """ Function to improve load distribution at buses """
 
         "Remove dismantled or not yet constructed equipment, check islands etc."
         if year is True:
@@ -138,27 +138,13 @@ class N490:
                 print('The following island buses were removed: %s' % str(ibus))
 
 
+        "Resetting the assigned loads "
+        self.bus.loc[:, 'load_share'] = 0
+
         # Improve load distribution in Sweden
-        "Resetting the assigned loads in SE "
-        self.bus.loc[self.bus.country == 'SE', 'load_share'] = 0
 
         "Read the load file for Sweden"
-        Sl = pd.read_excel("Sweden.xlsx", index_col=0)
-
-        # To Update the loads in Sweden
-        loc = cdist(arr(Sl.iloc[:, mult_ind(['x', 'y'], list(Sl))]), arr(self.bus.loc[:, ['x', 'y']]))
-        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
-
-        "To limit distribution of loads to within Sweden"
-        j=1
-        for i in range(len(pos)):
-            while j < 1000:
-                if (self.bus.at[pos[i], 'country'] == 'SE'):
-                    break
-                else:
-                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
-                    j += 1
-        Sl['bus'] = pos
+        Sl = pd.read_excel("Sweden - corrected.xlsx", index_col=0)
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -167,30 +153,10 @@ class N490:
                     if row2['bus'] == i:
                         self.bus.loc[i, 'load_share'] += row2['Load']
 
-        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
-
-
         # Improved Load distribution Norway
-        "Resetting the assigned loads in NO "
-        self.bus.loc[self.bus.country == 'NO', 'load_share'] = 0
 
         "Read the load file for Norway"
-        No = pd.read_excel("Norway.xlsx", index_col=0)
-
-        # Update the loads in Norway
-        loc = cdist(arr(No.iloc[:, mult_ind(['x', 'y'], list(No))]), arr(self.bus.loc[:, ['x', 'y']]))
-        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
-
-        "To limit distribution of loads to within Norway"
-        j = 1
-        for i in range(len(pos)):
-            while j < 1000:
-                if (self.bus.at[pos[i], 'country'] == 'NO'):
-                    break
-                else:
-                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
-                    j += 1
-        No['bus'] = pos
+        No = pd.read_excel("Norway - corrected.xlsx", index_col=0)
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -199,29 +165,11 @@ class N490:
                     if row2['bus'] == i:
                         self.bus.loc[i, 'load_share'] += row2['Load']
 
-        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
 
         # Improved Load distribution Finland
-        "Resetting the assigned loads in FI "
-        self.bus.loc[self.bus.country == 'FI', 'load_share'] = 0
 
         "Read the load file for Finland"
         Fi = pd.read_excel("Finland.xlsx", index_col=0)
-
-        # To Update the loads in Finland
-        loc = cdist(arr(Fi.iloc[:, mult_ind(['x', 'y'], list(Fi))]), arr(self.bus.loc[:, ['x', 'y']]))
-        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
-
-        " To limit distribution of loads to within Finland"
-        j = 1
-        for i in range(len(pos)):
-            while j < 1000:
-                if (self.bus.at[pos[i], 'country'] == 'FI'):
-                    break
-                else:
-                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
-                    j += 1
-        Fi['bus'] = pos
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -230,29 +178,10 @@ class N490:
                     if row2['bus'] == i:
                         self.bus.loc[i, 'load_share'] += row2['Load']
 
-        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
-
         # Improved Load distribution Denmark
-        "Resetting the assigned loads in DK "
-        self.bus.loc[self.bus.country == 'DK', 'load_share'] = 0
 
         "Read the load file for Denmark"
         Dk = pd.read_excel("Denmark.xlsx", index_col=0)
-
-        # To Update the loads in Denmark
-        loc = cdist(arr(Dk.iloc[:, mult_ind(['x', 'y'], list(Dk))]), arr(self.bus.loc[:, ['x', 'y']]))
-        pos = arr(self.bus.index[np.argmin(loc, axis=1)])
-
-        "To limit distribution of loads to within Denmark"
-        j = 1
-        for i in range(len(pos)):
-            while j < 1000:
-                if (self.bus.at[pos[i], 'country'] == 'DK'):
-                    break
-                else:
-                    pos[i] = self.bus.index[np.argpartition(loc[i], j)[j]]
-                    j += 1
-        Dk['bus'] = pos
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -263,13 +192,13 @@ class N490:
 
         self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
 
-
         # wind power
         f = self.farms
         f.drop(f[(f.status > 1) & ~f.uc].index, inplace=True)
 
         # existing wind farms on removed buses (iloc) -> find closest existing bus
         ind = find(np.isnan(mult_ind(f.bus, self.bus.index)))
+        #print(ind)
         d = cdist(arr(f.iloc[ind, mult_ind(['x', 'y'], list(f))]), arr(self.bus.loc[:, ['x', 'y']]))
         bus = arr(self.bus.index[np.argmin(d, axis=1)])
         f.iloc[ind, list(f).index('bus')] = bus
@@ -282,26 +211,31 @@ class N490:
         self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
 
 
-    def branch_params(self):
+    def branch_params(self, ohm_per_km):
+        #, S_per_km, compensate, XR
         """ Make some assumptions on branch parameters for lines and transformers.
         Note: X and B are per phase!
         """
-        ohm_per_km = 0.2  # for lines
-        S_per_km = 3e-6  # line charging susceptance
+        #ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
+        S_per_km = [13.8e-9, 13.2e-9, 12.5e-9]  # line charging susceptance [380, 300, 220] kV lines
         compensate = [0.4, 380, 200]  # long, high-voltage lines [compensation, min voltage (kV), min length (km)]
         trafo_x = [2.8e-4, 4e-4, 7e-4]  # pu reactance for [380,300,<300] kV per Sbase
-        XR = [10, 7.14, 5.56, 50]  # X/R for [380, 300, 220] kV lines and trafos
+        XR = [8.2, 6.625, 5.01667, 50]  # X/R for [380, 300, 220] kV lines and trafos
 
         line, trafo = self.line, self.trafo
 
         # lines
-        line['X'] = ohm_per_km * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
-        line['R'] = line.X / XR[2]
-        line.loc[line.Vbase == 380, 'R'] = line.loc[line.Vbase == 380, 'X'] / XR[0]
-        line.loc[line.Vbase == 300, 'R'] = line.loc[line.Vbase == 300, 'X'] / XR[1]
+        line['X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.Vbase == 380, 'X'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.Vbase == 300, 'X'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        line['R'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[2]
+        line.loc[line.Vbase == 380, 'R'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[0]
+        line.loc[line.Vbase == 300, 'R'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[1]
         comp = (line.Vbase >= compensate[1]) & (line.length >= compensate[2] * 1000)
         line.loc[comp, 'X'] *= compensate[0]
-        line['B'] = S_per_km * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
+        line['B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
+        line.loc[line.Vbase == 380, 'B'] = S_per_km[0] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
+        line.loc[line.Vbase == 300, 'B'] = S_per_km[1] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
 
         # transformers
         v0 = self.bus.loc[trafo.bus0, 'Vbase']  # voltage at bus0
@@ -536,6 +470,7 @@ class N490:
         if gen_equals_load:
             self.gen.P *= self.bus.load.sum() / self.gen.P.sum()
 
+
     def make_mpc(self):
         """ Make matpower/pypower case (mostly DC parameters for now).
         Safer to use bus_idx etc. to find correct columns for pypower version in question?"""
@@ -607,6 +542,7 @@ class N490:
             self.flow_modelled.at[time, i] = ac_flow.at[time, i]
         if save2network:
             self.mpc2network()  # add parameters to network (flows, voltage angle etc.)
+
 
     def compare_flows(self, n=None, plot=True):
         """Compare flow_measured with flow_modelled
