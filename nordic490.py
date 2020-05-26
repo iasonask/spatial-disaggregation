@@ -144,7 +144,7 @@ class N490:
         # Improve load distribution in Sweden
 
         "Read the load file for Sweden"
-        Sl = pd.read_excel("Sweden - corrected.xlsx", index_col=0)
+        Sl = pd.read_excel("Data/Loads/Sweden.xlsx", index_col=0)
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -156,7 +156,7 @@ class N490:
         # Improved Load distribution Norway
 
         "Read the load file for Norway"
-        No = pd.read_excel("Norway - corrected.xlsx", index_col=0)
+        No = pd.read_excel("Data/Loads/Norway.xlsx", index_col=0)
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -169,7 +169,7 @@ class N490:
         # Improved Load distribution Finland
 
         "Read the load file for Finland"
-        Fi = pd.read_excel("Finland.xlsx", index_col=0)
+        Fi = pd.read_excel("Data/Loads/Finland.xlsx", index_col=0)
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -181,7 +181,7 @@ class N490:
         # Improved Load distribution Denmark
 
         "Read the load file for Denmark"
-        Dk = pd.read_excel("Denmark.xlsx", index_col=0)
+        Dk = pd.read_excel("Data/Loads/Denmark.xlsx", index_col=0)
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -198,7 +198,6 @@ class N490:
 
         # existing wind farms on removed buses (iloc) -> find closest existing bus
         ind = find(np.isnan(mult_ind(f.bus, self.bus.index)))
-        #print(ind)
         d = cdist(arr(f.iloc[ind, mult_ind(['x', 'y'], list(f))]), arr(self.bus.loc[:, ['x', 'y']]))
         bus = arr(self.bus.index[np.argmin(d, axis=1)])
         f.iloc[ind, list(f).index('bus')] = bus
@@ -211,14 +210,15 @@ class N490:
         self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
 
 
-    def branch_params(self, ohm_per_km):
-        #, S_per_km, compensate, XR
+    def branch_params(self):
+        #, ohm_per_km, compensate, trafo_x
         """ Make some assumptions on branch parameters for lines and transformers.
         Note: X and B are per phase!
         """
-        #ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
+        ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
+        #ohm_per_km = [0.33982, 0.33999, 0.38429]
         S_per_km = [13.8e-9, 13.2e-9, 12.5e-9]  # line charging susceptance [380, 300, 220] kV lines
-        compensate = [0.4, 380, 200]  # long, high-voltage lines [compensation, min voltage (kV), min length (km)]
+        compensate = [0.5, 380, 200]  # long, high-voltage lines [compensation, min voltage (kV), min length (km)]
         trafo_x = [2.8e-4, 4e-4, 7e-4]  # pu reactance for [380,300,<300] kV per Sbase
         XR = [8.2, 6.625, 5.01667, 50]  # X/R for [380, 300, 220] kV lines and trafos
 
@@ -226,17 +226,33 @@ class N490:
 
         # lines
         line['X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        # line.loc[line.Vbase == 132 & line.circuit == 2, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line.loc[line.Vbase == 380, 'X'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        #line.loc[line.Vbase == 380 & line.circuit == 1, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        # line.loc[line.Vbase == 380 & line.circuit == 2, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line.loc[line.Vbase == 300, 'X'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        # line.loc[line.Vbase == 300 & line.circuit == 1, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        # line.loc[line.Vbase == 300 & line.circuit == 2, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        #line.loc[line.Vbase == 220, 'X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        # line.loc[line.Vbase == 220 & line.circuit == 1, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        # line.loc[line.Vbase == 220 & line.circuit == 2, 'X'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line['R'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[2]
+        #line.loc[line.Vbase == 132 & line.circuit == 2, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
         line.loc[line.Vbase == 380, 'R'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[0]
+        # line.loc[line.Vbase == 380 & line.circuit == 1, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
+        # line.loc[line.Vbase == 380 & line.circuit == 2, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
         line.loc[line.Vbase == 300, 'R'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[1]
+        # line.loc[line.Vbase == 300 & line.circuit == 1, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
+        # line.loc[line.Vbase == 300 & line.circuit == 2, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
+        #line.loc[line.Vbase == 220, 'R'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[2]
+        # line.loc[line.Vbase == 220 & line.circuit == 1, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
+        # line.loc[line.Vbase == 220 & line.circuit == 2, 'R'] = ohm_per_km[] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[]
         comp = (line.Vbase >= compensate[1]) & (line.length >= compensate[2] * 1000)
-        line.loc[comp, 'X'] *= compensate[0]
+        line.loc[comp, 'X'] -= compensate[0] * line.loc[comp, 'X']
         line['B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         line.loc[line.Vbase == 380, 'B'] = S_per_km[0] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         line.loc[line.Vbase == 300, 'B'] = S_per_km[1] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
-
+        #line.loc[line.Vbase == 220, 'B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         # transformers
         v0 = self.bus.loc[trafo.bus0, 'Vbase']  # voltage at bus0
         v1 = self.bus.loc[trafo.bus1, 'Vbase']  # voltage at bus1
@@ -335,7 +351,6 @@ class N490:
 
         # Nordpool load
         load = db.select_data(table='consumption', starttime=start, endtime=stop).loc[:, self.bidz]
-
         # Nordpool exchange (both AC and DC)
         exch_np = db.select_data(table='exchange', starttime=start, endtime=stop)
         cols = [c.replace(' ', '') for c in list(exch_np)]  # no blanks
@@ -635,7 +650,7 @@ class N490:
         m.init_plot()
         m.add_topo()
         m.add_legend()
-        m.show()
+        #m.show()
 
     def simple_plot(self, bus=None, line=None, link=None):
         """ Simple plot, possibly highlight certain buses, lines and/or links. """
@@ -668,7 +683,7 @@ class N490:
         fig.subplots_adjust(bottom=0.01, top=0.99, left=0.01, right=0.99)
         ax.tick_params(axis='both', which='both', bottom=False, labelbottom=False,
                        top=False, labeltop=False, left=False, labelleft=False, right=False, labelright=False)
-        plt.show()
+        #plt.show()
 
     def find_islands(self):
         """ Return island buses. """
@@ -684,6 +699,25 @@ class N490:
             return [b for s in SG[1:] for b in s]
         else:
             return []
+
+    def balance(self, time=0):
+
+        if type(time) is int:
+            time = self.flow_modelled.index[time]
+
+        # Check balance per area
+        bal = pd.DataFrame(0, index=self.bidz, columns=['load', 'gen', 'ac', 'balance'])
+        for b in self.bidz:
+            ind = self.bus.index[self.bus.bidz == b]
+            bal.at[b, 'load'] = -np.sum(self.bus.loc[ind, 'load'])
+            ind = self.gen.index[self.gen.bidz == b]
+            bal.at[b, 'gen'] = np.sum(self.gen.loc[ind, 'P'])
+            bal.at[b, 'ac'] += np.sum(np.matrix(self.flow_modelled.loc[time, self.flow_modelled.columns.str.contains(b+'-')]))
+            bal.at[b, 'ac'] -= np.sum(np.matrix(self.flow_modelled.loc[time, self.flow_modelled.columns.str.contains('-'+b)]))
+            #bal.at[b, 'ac'] -= np.sum(np.matrix(ac_flow.loc[:, ac_flow.columns.str.contains('-'+b)]))
+        bal['balance'] = np.sum(bal, axis=1)
+        print(bal)
+        #return bal
 
 
 if __name__ == '__main__':

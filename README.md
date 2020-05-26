@@ -34,6 +34,26 @@ m.compare_flows() # see how interarea flows compare with measurements
 m.save_mat('test.mat') # save in Matpower format
 ```
 
+### Branch Parameters 
+```python
+from nordic490 import N490
+ohm_per_km = []
+err = []
+i = 0.26
+while i < 0.36:
+    ohm_per_km = [i, 1.07723*i, 1.22357*i]
+    m = N490(year=2018)
+    m.branch_params(ohm_per_km) # simple assumptions on R, X and B
+    #m.time_series('20180101:00','20180107:23')
+    load, gen, link = m.get_measurements('20180120:18') # download data for a certain hour
+    m.distribute_power(load, gen, link) # distribute on buses and gens (simple method)
+    m.dcpf() # solve DC power flow
+    a = m.calculate_errors() # see how interarea flows compare with measurements
+    err.append((i, a['MAE'].sum()))         
+    i += 0.002
+print(err)
+```
+
 ### Time series
 ```python
 from nordic490 import N490, plt

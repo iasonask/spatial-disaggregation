@@ -1,4 +1,3 @@
-
 """
 Created on April 2020
 
@@ -24,7 +23,8 @@ def mult_ind(a, b, miss=np.nan):
             bind[elt] = i
     return arr([bind.get(itm, miss) for itm in a])
 
-bidz_map=os.path.join('Data', 'raw', 'map_with_bidz2018.npz')
+
+bidz_map = os.path.join('Data', 'raw', 'map_with_bidz2018.npz')
 temp = np.load(bidz_map, allow_pickle=True)
 x_map = temp['x']
 y_map = temp['y']
@@ -84,14 +84,12 @@ yDk = y_map[5]
 polygonDK2 = np.vstack((xDk, yDk)).T
 pathD2 = mpltPath.Path(polygonDK2)
 
-
 bus = pd.read_excel("N490.xlsx", index_col=0)
 
 # Assign Loads in Norway to buses
 
 "Read the load file for Norway"
 No = pd.read_excel("Norway.xlsx", index_col=0)
-
 
 # Find the nearest bus
 loc = cdist(arr(No.iloc[:, mult_ind(['x', 'y'], list(No))]), arr(bus.loc[:, ['x', 'y']]))
@@ -105,8 +103,8 @@ for k, row in No.iterrows():
     while j < 40:
         pos[i] = bus.index[np.argpartition(loc[i], j)[j]]
         j += 1
+        points = np.array([No.at[k, 'x'], No.at[k, 'y']]).reshape(1, 2)
         if (bus.at[pos[i], 'country'] == 'NO'):
-            points = np.array([No.at[k, 'x'], No.at[k, 'y']]).reshape(1, 2)
             if pathN1.contains_points(points):
                 if (bus.at[pos[i], 'bidz'] == 'NO1'):
                     region = np.append(region, 'NO1')
@@ -150,7 +148,7 @@ No['bidz'] = region
 bN = []
 for i, row in No.iterrows():
     if No.at[i, 'bidz'] == 'NO3':
-        if pathN3.contains_points(np.array([No.at[i,'x'], No.at[i,'y']]).reshape(1,2)):
+        if pathN3.contains_points(np.array([No.at[i, 'x'], No.at[i, 'y']]).reshape(1, 2)):
             continue
         else:
             bN = np.append(bN, No.at[i, 'Muncipality'])
@@ -172,8 +170,8 @@ for k, row in Se.iterrows():
     while j < 40:
         pos[i] = bus.index[np.argpartition(loc[i], j)[j]]
         j += 1
+        points = np.array([Se.at[k, 'x'], Se.at[k, 'y']]).reshape(1, 2)
         if (bus.at[pos[i], 'country'] == 'SE'):
-            points = np.array([Se.at[k, 'x'], Se.at[k, 'y']]).reshape(1,2)
             if pathS1.contains_points(points):
                 if (bus.at[pos[i], 'bidz'] == 'SE1'):
                     region = np.append(region, 'SE1')
@@ -215,7 +213,6 @@ for i, row in Se.iterrows():
             continue
         else:
             bS = np.append(bS, Se.at[i, 'Muncipality'])
-
 
 # Assign loads in Finland to buses
 "Read the load file for Finland"
@@ -279,17 +276,26 @@ for i, row in Dk.iterrows():
         else:
             bD = np.append(bD, Dk.at[i, 'Muncipality'])
 
+""" To plot the muncipalities and bus locations"""
+plt.subplots(1, 1, figsize=[6, 8])
+plt.fill([-1e6, -1e6, 2e6, 2e6, -1e6], [5e6, 9e6, 9e6, 5e6, 5e6], facecolor=(220. / 255, 238. / 255, 1))
+plt.tick_params(axis='both', which='both', bottom=False, labelbottom=False, top=False, labeltop=False, left=False,
+               labelleft=False, right=False, labelright=False)
 for x, y in zip(x_map, y_map):
+    plt.fill(x, y, 'w')
     plt.plot(x, y, 'k', lw=0.5)
-plt.plot(Se.x, Se.y, '.', lw=0.001)
-plt.plot(No.x, No.y, '.', lw=0.001)
-plt.plot(Fi.x, Fi.y, '.', lw=0.001)
-plt.plot(Dk.x, Dk.y, '.', lw=0.001)
-plt.plot(bus.x, bus.y, 'x')
+plt.plot(Se.x, Se.y, '.', label='Sweden Muncipalities')
+plt.plot(No.x, No.y, '.', label='Norway Muncipalities')
+plt.plot(Fi.x, Fi.y, '.', label='Finland Muncipalities')
+plt.plot(Dk.x, Dk.y, '.', label='Denmark Muncipalities')
+plt.plot(bus.x, bus.y, 'x', label='Buses')
+plt.legend()
+plt.xlim([-1.2e5, 1.35e6])
+plt.ylim([5.9e6, 7.95e6])
+plt.subplots_adjust(bottom=0.01, top=0.99, left=0.01, right=0.99)
 plt.show()
 
-
-
+"""To modify bus allocation for generators"""
 gen = pickle.load(open('gen_org.pkl', 'rb'))
 
 loc = cdist(arr(gen.iloc[:, mult_ind(['x', 'y'], list(gen))]), arr(bus.loc[:, ['x', 'y']]))
@@ -301,8 +307,8 @@ for k, row in gen.iterrows():
     while j < 40:
         pos[i] = bus.index[np.argpartition(loc[i], j)[j]]
         j += 1
-        if (bus.at[pos[i], 'country'] == 'NO'):
-            points = np.array([gen.at[k, 'x'], gen.at[k, 'y']]).reshape(1, 2)
+        points = np.array([gen.at[k, 'x'], gen.at[k, 'y']]).reshape(1, 2)
+        if (gen.at[k, 'country'] == 'NO'):
             if pathN1.contains_points(points):
                 if (bus.at[pos[i], 'bidz'] == 'NO1'):
                     region = np.append(region, 'NO1')
@@ -337,8 +343,7 @@ for k, row in gen.iterrows():
                 region = np.append(region, bus.at[pos[i], 'bidz'])
                 break
 
-        elif (bus.at[pos[i], 'country'] == 'SE'):
-            points = np.array([gen.at[k, 'x'], gen.at[k, 'y']]).reshape(1, 2)
+        elif (gen.at[k, 'country'] == 'SE'):
             if pathS1.contains_points(points):
                 if (bus.at[pos[i], 'bidz'] == 'SE1'):
                     region = np.append(region, 'SE1')
@@ -366,15 +371,19 @@ for k, row in gen.iterrows():
             else:
                 region = np.append(region, bus.at[pos[i], 'bidz'])
                 break
+        elif (gen.at[k, 'country'] == 'FI'):
+            if (bus.at[pos[i], 'bidz'] == 'FI'):
+                region = np.append(region, 'FI')
+                break
+            else:
+                continue
 
-        elif (bus.at[pos[i], 'country'] == 'FI'):
-            region = np.append(region, bus.at[pos[i], 'bidz'])
-            break
-
-        elif (bus.at[pos[i], 'country'] == 'DK'):
-            region = np.append(region, bus.at[pos[i], 'bidz'])
-            break
-
+        elif (gen.at[k, 'country'] == 'DK'):
+            if (bus.at[pos[i], 'bidz'] == 'DK2'):
+                region = np.append(region, 'DK2')
+                break
+            else:
+                continue
         else:
             continue
     i += 1
@@ -382,6 +391,23 @@ for k, row in gen.iterrows():
 gen['bus'] = pos
 gen['bidz'] = region
 
+""" To plot the generators and buses"""
+plt.subplots(1, 1, figsize=[6, 8])
+plt.fill([-1e6, -1e6, 2e6, 2e6, -1e6], [5e6, 9e6, 9e6, 5e6, 5e6], facecolor=(220. / 255, 238. / 255, 1))
+plt.tick_params(axis='both', which='both', bottom=False, labelbottom=False, top=False, labeltop=False, left=False,
+               labelleft=False, right=False, labelright=False)
+for x, y in zip(x_map, y_map):
+    plt.fill(x, y, 'w')
+    plt.plot(x, y, 'k', lw=0.5)
+plt.plot(gen.x, gen.y, '.', label='Generators')
+plt.plot(bus.x, bus.y, 'x', label='Buses')
+plt.legend()
+plt.xlim([-1.2e5, 1.35e6])
+plt.ylim([5.9e6, 7.95e6])
+plt.subplots_adjust(bottom=0.01, top=0.99, left=0.01, right=0.99)
+plt.show()
+
+"""To modify bus allocation for wind farms"""
 farms = pickle.load(open('farms_org.pkl', 'rb'))
 
 loc = cdist(arr(farms.iloc[:, mult_ind(['x', 'y'], list(farms))]), arr(bus.loc[:, ['x', 'y']]))
@@ -393,8 +419,8 @@ for k, row in farms.iterrows():
     while j < 40:
         pos[i] = bus.index[np.argpartition(loc[i], j)[j]]
         j += 1
-        if (bus.at[pos[i], 'country'] == 'NO'):
-            points = np.array([farms.at[k, 'x'], farms.at[k, 'y']]).reshape(1, 2)
+        points = np.array([farms.at[k, 'x'], farms.at[k, 'y']]).reshape(1, 2)
+        if (farms.at[k, 'country'] == 'NO'):
             if pathN1.contains_points(points):
                 if (bus.at[pos[i], 'bidz'] == 'NO1'):
                     region = np.append(region, 'NO1')
@@ -429,8 +455,7 @@ for k, row in farms.iterrows():
                 region = np.append(region, bus.at[pos[i], 'bidz'])
                 break
 
-        elif (bus.at[pos[i], 'country'] == 'SE'):
-            points = np.array([farms.at[k, 'x'], farms.at[k, 'y']]).reshape(1, 2)
+        elif (farms.at[k, 'country'] == 'SE'):
             if pathS1.contains_points(points):
                 if (bus.at[pos[i], 'bidz'] == 'SE1'):
                     region = np.append(region, 'SE1')
@@ -459,14 +484,19 @@ for k, row in farms.iterrows():
                 region = np.append(region, bus.at[pos[i], 'bidz'])
                 break
 
-        elif (bus.at[pos[i], 'country'] == 'FI'):
-            region = np.append(region, bus.at[pos[i], 'bidz'])
-            break
+        elif (farms.at[k, 'country'] == 'FI'):
+            if (bus.at[pos[i], 'bidz'] == 'FI'):
+                region = np.append(region, 'FI')
+                break
+            else:
+                continue
 
-        elif (bus.at[pos[i], 'country'] == 'DK'):
-            region = np.append(region, bus.at[pos[i], 'bidz'])
-            break
-
+        elif (farms.at[k, 'country'] == 'DK'):
+            if (bus.at[pos[i], 'bidz'] == 'DK2'):
+                region = np.append(region, 'DK2')
+                break
+            else:
+                continue
         else:
             continue
     i += 1
@@ -474,4 +504,18 @@ for k, row in farms.iterrows():
 farms['bus'] = pos
 farms['bidz'] = region
 
-
+""" To plot the Wind Farms"""
+plt.subplots(1, 1, figsize=[6, 8])
+plt.fill([-1e6, -1e6, 2e6, 2e6, -1e6], [5e6, 9e6, 9e6, 5e6, 5e6], facecolor=(220. / 255, 238. / 255, 1))
+plt.tick_params(axis='both', which='both', bottom=False, labelbottom=False, top=False, labeltop=False, left=False,
+               labelleft=False, right=False, labelright=False)
+for x, y in zip(x_map, y_map):
+    plt.fill(x, y, 'w')
+    plt.plot(x, y, 'k', lw=0.5)
+plt.plot(farms.x, farms.y, 'g1', label='Wind Farms')
+plt.plot(bus.x, bus.y, 'x', label='Buses')
+plt.legend()
+plt.xlim([-1.2e5, 1.35e6])
+plt.ylim([5.9e6, 7.95e6])
+plt.subplots_adjust(bottom=0.01, top=0.99, left=0.01, right=0.99)
+plt.show()
