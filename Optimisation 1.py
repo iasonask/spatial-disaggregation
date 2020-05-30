@@ -44,15 +44,18 @@ def objective(x):
 
     return err['MAE'].sum()
 
-bz1 = (0.24, 0.42)
-bz2 = (0.24, 0.34)
-b2 = (0.40, 0.70)
+bz1 = (0.20, 0.38)
+bz2 = (0.20, 0.44)
+b2 = (0.40, 0.55)
 bt1 = (2.8e-2, 1e-1)
 bt2 = (4e-2, 1.5e-1)
 bt3 = (7e-2, 1.5e-1)
 bounds = (bz1, bz2, bz2, b2, bt1, bt2, bt3)
 
 sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-3})
-#sol = minimize(objective, x0, method='L-BFGS-B', bounds=bounds)
+
+sol1 = minimize(objective, x0, method='L-BFGS-B', bounds=bounds, options={'disp': True, 'eps': 1e-3})
+
 
 print(sol)
+print(sol1)

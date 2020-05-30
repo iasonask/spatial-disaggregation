@@ -209,17 +209,22 @@ class N490:
 
         self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
 
+        "To model Norway-Russia transmission line and power exchanges (Modelled as HVDC line) "
+        row = pd.Series(data={'name': 'NO-RU', 'area0': 'NO4', 'area1': 'RU', 'uc': 0, 'bus0': 6809, 'bus1': 6825, 'lat': [69.5197659037814, 69.682236152263], 'lon': [30.3618854961022, 30.1205975038978], 'x': [1094400.04873005, 1080765.43901409], 'y': [7787528.1372227, 7802824.04243818], 'source': 'Pypsa 2019-09-04'}, name=1328)
+        self.link = self.link.append(row, ignore_index=False)
+
 
     def branch_params(self):
         #, ohm_per_km, compensate, trafo_x
         """ Make some assumptions on branch parameters for lines and transformers.
         Note: X and B are per phase!
         """
-        ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
-        #ohm_per_km = [0.33982, 0.33999, 0.38429]
-        S_per_km = [13.8e-9, 13.2e-9, 12.5e-9]  # line charging susceptance [380, 300, 220] kV lines
+        #ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
+        ohm_per_km = [0.364, 0.381, 0.3968]
+        S_per_km = [3e-6, 3e-6, 3e-6]  # line charging susceptance [380, 300, 220] kV lines
         compensate = [0.5, 380, 200]  # long, high-voltage lines [compensation, min voltage (kV), min length (km)]
-        trafo_x = [2.8e-4, 4e-4, 7e-4]  # pu reactance for [380,300,<300] kV per Sbase
+        #trafo_x = [2.8e-4, 4e-4, 7e-4]  # pu reactance for [380,300,<300] kV per Sbase
+        trafo_x = [2.8e-4, 4e-4, 1.5e-3]
         XR = [8.2, 6.625, 5.01667, 50]  # X/R for [380, 300, 220] kV lines and trafos
 
         line, trafo = self.line, self.trafo
@@ -288,7 +293,7 @@ class N490:
                    'Thermal': 'Thermal', 'Waste': 'Thermal', 'Wind': 'Wind', 'Wind offsh': 'Wind', 'Wind onsh': 'Wind'}
 
         # Adjust exchange areas from Nordpool, e.g. SE-PL becomes SE4-PL
-        exch_fix = {'SE-PL': 'SE4-PL', 'SE-DE': 'SE4-DE', 'NO-DK': 'NO2-DK1', 'NO-NL': 'NO2-NL', 'NO-FI': 'NO4-FI'}
+        exch_fix = {'SE-PL': 'SE4-PL', 'SE-DE': 'SE4-DE', 'NO-DK': 'NO2-DK1', 'NO-NL': 'NO2-NL', 'NO-FI': 'NO4-FI', 'NO-RU': 'NO4-RU'}
 
         def timestamp(s):
             return pd.to_datetime(s, format='%Y%m%d:%H')  # 'yyyymmdd:hh' to pd.Timestamp
@@ -384,7 +389,7 @@ class N490:
                 for i2 in ind2:
                     link.at[:, i2] = -arr(exch.loc[:, i] / num)
 
-        # AC exchange between areas.
+        # AC exchange between areas
         ac_flow = pd.DataFrame(index=time)
         for i in list(exch):
             a0, a1 = i.split('-')
@@ -650,7 +655,7 @@ class N490:
         m.init_plot()
         m.add_topo()
         m.add_legend()
-        #m.show()
+        m.show()
 
     def simple_plot(self, bus=None, line=None, link=None):
         """ Simple plot, possibly highlight certain buses, lines and/or links. """
