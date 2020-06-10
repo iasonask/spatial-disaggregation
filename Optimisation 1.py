@@ -29,12 +29,12 @@ t220 = 7e-2
 t300 = 4e-2
 t380 = 2.8e-2
 
-x0 = [Z380, Z300, Z220, comp, t380, t300, t220]
+x0 = [Z380, Z300, Z220, comp, t380, t300]#, t220]
 
 def objective(x):
     ohm_per_km = [x[0], x[1], x[2]]
     compensate = [x[3], 380, 200]
-    trafo_x = [x[4]/100, x[5]/100, x[6]/100]
+    trafo_x = [x[4]/100, x[5]/100, 0.15/100]# x[6]/100]
     del sys.modules['nordic490']
     from nordic490 import N490
     m = N490(year=2018)
@@ -49,13 +49,12 @@ bz2 = (0.20, 0.44)
 b2 = (0.40, 0.55)
 bt1 = (2.8e-2, 1e-1)
 bt2 = (4e-2, 1.5e-1)
-bt3 = (7e-2, 1.5e-1)
-bounds = (bz1, bz2, bz2, b2, bt1, bt2, bt3)
+#bt3 = (7e-2, 1.5e-1)
+bounds = (bz1, bz2, bz2, b2, bt1, bt2)#, bt3)
 
 sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-3})
 
-sol1 = minimize(objective, x0, method='L-BFGS-B', bounds=bounds, options={'disp': True, 'eps': 1e-3})
-
+#sol1 = minimize(objective, x0, method='L-BFGS-B', bounds=bounds, options={'disp': True, 'eps': 1e-3})
 
 print(sol)
-print(sol1)
+#print(sol1)
