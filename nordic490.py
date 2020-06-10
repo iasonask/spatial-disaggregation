@@ -451,7 +451,7 @@ class N490:
 
         # Load including wind (+PV) and negative load
         self.bus['load'] = 0
-        for i, row in self.farms.iterrows():  # wind as negative load
+        for i, row in self.farms.iterrowsgit ():  # wind as negative load
             self.bus.at[int(row.bus), 'load'] -= row.P
         for b in self.bidz:
             ind = self.bus.index[self.bus.bidz == b]
