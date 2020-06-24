@@ -254,7 +254,7 @@ loc = cdist(arr(Dk.iloc[:, mult_ind(['x', 'y'], list(Dk))]), arr(bus.loc[:, ['x'
 pos = arr(bus.index[np.argmin(loc, axis=1)])
 region = np.array([])
 
-" To limit distribution of loads to within Finland"
+" To limit distribution of loads to within Denmark"
 for i in range(len(pos)):
     j = 0
     while j < 40:
