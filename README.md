@@ -3,9 +3,9 @@
 This class can be used for:
 1) read network topology, remove too old/new elements depending on scenario year
 2) basic assumptions on branch parameters (+gen, bus; allt i mpc ska finnas i network)
-3) download data from Ensto-e, Svk and Nordpool for a given time
+3) download data from Ensto-e and Nordpool for a given time
 4) simple scenario for load, generation etc on each bus
-5) DC power flow (AC requires more work...)
+5) DC power flow and AC power flow (AC requires more work...)
 6) plotting
 7) export
 
@@ -63,7 +63,7 @@ ac = m.compare_flows(plot=False) # get AC interarea flows (measured and simulate
 ac['SE1-SE2'].plot()
 plt.show()
 ```
-### Calculate Errors Method 1
+### Calculate Errors 
 ```python
 from nordic490 import N490, plt
 m = N490(year=2018,set_branch_params=True)
@@ -72,23 +72,6 @@ error = m.calculate_errors() # to calculate error in 'n'th timestep, pass n as a
 print(error)
 ```
 
-### Calculating error Method 2
-```python
-import numpy as np
-from nordic490 import N490, plt
-m = N490(year=2018,set_branch_params=True)
-m.time_series('20180101:00','20180107:23') # download one week of data + DCPF for each hour
-ac = m.compare_flows(plot=False)
-measured = ac.iloc[:, ac.columns.get_level_values(1)=='Measured']
-modelled = ac.iloc[:, ac.columns.get_level_values(1)=='Modelled']
-level_one = measured.columns.get_level_values(0).astype(str)
-measured.columns=level_one
-level_two = modelled.columns.get_level_values(0).astype(str)
-modelled.columns=level_two
-MAE = np.abs(measured-modelled).mean() # mean absolute error
-MAPE = np.abs((measured-modelled)/measured).mean() # mean absolute percentage error
-RMSE = np.sqrt(np.square(measured-modelled).mean()) # root mean square error
-```
 ### Deafult network plots
 ```python
 from nordic490 import N490, plt
