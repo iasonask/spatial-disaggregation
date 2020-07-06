@@ -17,9 +17,10 @@ C380 = 3e-6
 """
 
 """Ohm per km of the lines"""
-Z220 = 0.301
-Z300 = 0.265
-Z380 = 0.246
+Z220 = 0.2 #0.301
+Z300 = 0.265 #0.265
+Z380 = 0.301
+Z132 = 0.301
 
 """Compensation factor for long distance lines"""
 comp = 0.4
@@ -28,19 +29,21 @@ comp = 0.4
 t220 = 7e-2
 t300 = 4e-2
 t380 = 2.8e-2
+t4 = 2.8e-2
+t5 = 2.8e-2
+t6 = 2.8e-2
 
-tmp = 0.8
 
-x0 = [Z380, Z300, Z220, tmp]#, t380, t300, t220]
+x0 = [Z380]
 
 def objective(x):
-    ohm_per_km = [x[0], x[1], x[2]]
+    ohm_per_km = [x[0], Z300, Z220, Z132]
     #compensate = [0.4, 380, 200]
-    #trafo_x = [x[3]/100, x[4]/100, x[5]/100]
+    #trafo_x = [x[0], x[1], x[2], x[3], x[4], x[5]]
     del sys.modules['nordic490']
     from nordic490 import N490
     m = N490(year=2018)
-    m.branch_params(ohm_per_km, x[3])#, compensate, trafo_x)
+    m.branch_params(ohm_per_km)#, compensate, trafo_x)
     m.time_series('20180101:00', '20180107:23')
     err = m.calculate_errors()
     print(x, err['MAE'].sum())
@@ -48,13 +51,13 @@ def objective(x):
 
 bz1 = (0.2, 0.5)
 bz2 = (0.2, 0.5)
-bz3 = (0.2, 0.5)
-btmp = (0.5, 1.0)
+bz3 = (0.2, 0.6)
+bz4 = (0.2, 0.6)
 #b2 = (0.40, 0.55)
-#bt1 = (2.8e-2, 1e-1)
+#bt1 = (2e-2, 1.5e-1)
 #bt2 = (4e-2, 1.5e-1)
 #bt3 = (7e-2, 1.5e-1)
-bounds = (bz1, bz2, bz3, btmp)#, bt1, bt2, bt3)
+bounds = (bz1)
 
 
 sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-3})

@@ -20,7 +20,7 @@ from numpy import concatenate as cat
 import matplotlib.pyplot as plt
 from pypower.runopf import runopf
 from scipy.io import savemat
-from pypower.api import rundcpf, runpf, case118, ppoption
+from pypower.api import rundcpf, runpf, case118, ppoption, rundcopf
 import nordpool_db as nordpool
 import entsoe_transparency_db as entsoe
 from scipy.spatial.distance import cdist
@@ -52,8 +52,8 @@ class N490:
         self.country = ['SE', 'NO', 'FI', 'DK'] # Countries in the model
         self.gen_type = ['Nuclear', 'Hydro', 'Thermal', 'Wind']  # Main gen types
         self.load_data(topology_file)  # load network data from xlsx, npy etc.
-        #self.prepare_network(year)  # possibly remove too new or old data, check islands
-        self.modify_network(year)  # remove too new or old data, check islands and update loads in the countries
+        self.prepare_network(year)  # possibly remove too new or old data, check islands
+        #self.modify_network(year)  # remove too new or old data, check islands and update loads in the countries
         self.flow_measured = []  # store measured AC flows between areas
         self.flow_modelled = []  # store modelled -"- from e.g. dcpf()
         self.solved_mpc = []  # store solved cases
@@ -100,8 +100,7 @@ class N490:
 
         # wind power
         f = self.farms
-        f.drop(f[(f.status > 1) & ~f.uc].index, inplace=True)
-
+        f.drop(f[(f.status > 1) & ~f.uc].index, inplace=True) # remove non-operational wind farms
         # existing wind farms on removed buses (iloc) -> find closest existing bus
         ind = find(np.isnan(mult_ind(f.bus, self.bus.index)))
         d = cdist(arr(f.iloc[ind, mult_ind(['x', 'y'], list(f))]), arr(self.bus.loc[:, ['x', 'y']]))
@@ -113,6 +112,15 @@ class N490:
             sum_share = self.bus.loc[self.bus.bidz == b, 'load_share'].sum()
             self.bus.loc[self.bus.bidz == b, 'load_share'] *= 1 / sum_share
 
+        row = pd.Series(
+            data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE1', 'bus': 6666,
+                  'uc': 0, 'country': 'SE'}, name=9999)  # 6672
+        self.gen = self.gen.append(row, ignore_index=False)
+
+        row = pd.Series(
+            data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE2', 'bus': 6540,
+                  'uc': 0, 'country': 'SE'}, name=9998)  # 6391
+        self.gen = self.gen.append(row, ignore_index=False)
 
     def modify_network(self, year):
 
@@ -136,7 +144,6 @@ class N490:
             if warnings:
                 print('The following island buses were removed: %s' % str(ibus))
 
-
         "Resetting the assigned loads "
         self.bus.loc[:, 'load_share'] = 0
 
@@ -155,7 +162,11 @@ class N490:
         # Improved Load distribution Norway
 
         "Read the load file for Norway"
-        No = pd.read_excel("Data/Loads/NO.xlsx", index_col=0)
+        No = pd.read_excel("Data/Loads/No.xlsx", index_col=0)
+        No.loc[1428, 'bus'] = 6478
+        No.loc[1428, 'bidz'] = 'NO5'
+        No.loc[1546, 'bus'] = 6478
+        No.loc[1546, 'bidz'] = 'NO5'
 
         # Update load_share with new data
         for i, row1 in self.bus.iterrows():
@@ -163,7 +174,6 @@ class N490:
                 if row1['country'] == 'NO':
                     if row2['bus'] == i:
                         self.bus.loc[i, 'load_share'] += row2['Load']
-
 
         # Improved Load distribution Finland
 
@@ -194,7 +204,18 @@ class N490:
         f = self.farms
         f.drop(f[(f.status > 1) & ~f.uc].index, inplace=True)
         self.farms.loc['1280-V-002', 'bus'] = 5572
+        self.farms.loc['1280-V-002', 'bidz'] = 'SE4'
         self.farms.loc['1280-V-002_2', 'bus'] = 5572
+        self.farms.loc['1280-V-002_2', 'bidz'] = 'SE4'
+        self.farms.loc['0885-V-001', 'bus'] = 6125
+        self.farms.loc['0885-V-003', 'bus'] = 6125
+        self.farms.loc['0885-V-017', 'bus'] = 6125
+        self.farms.loc['0885-V-017_2', 'bus'] = 6125
+        self.farms.loc['0885-V-001', 'bidz'] = 'SE4'
+        self.farms.loc['0885-V-003', 'bidz'] = 'SE4'
+        self.farms.loc['0885-V-017', 'bidz'] = 'SE4'
+        self.farms.loc['0885-V-017_2', 'bidz'] = 'SE4'
+
 
         # existing wind farms on removed buses (iloc) -> find closest existing bus
         ind = find(np.isnan(mult_ind(f.bus, self.bus.index)))
@@ -213,47 +234,53 @@ class N490:
         row = pd.Series(data={'name': 'NO-RU', 'area0': 'NO4', 'area1': 'RU', 'uc': 0, 'bus0': 6809, 'bus1': 6825, 'lat': [69.5197659037814, 69.682236152263], 'lon': [30.3618854961022, 30.1205975038978], 'x': [1094400.04873005, 1080765.43901409], 'y': [7787528.1372227, 7802824.04243818], 'source': 'Pypsa 2019-09-04', 'info': 'The 132kV line between NO4-Ru is modelled as a link'}, name=1328)
         self.link = self.link.append(row, ignore_index=False)
 
-        row = pd.Series(data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE1', 'bus': 6672,
-                              'uc': 0, 'country': 'SE'}, name=9999)
+        row = pd.Series(data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE1', 'bus': 6666,
+                              'uc': 0, 'country': 'SE'}, name=9999)#6672
         self.gen = self.gen.append(row, ignore_index=False)
 
         row = pd.Series(
-            data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE2', 'bus': 6391,
-                  'uc': 0, 'country': 'SE'}, name=9998)
+            data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE2', 'bus': 6540,
+                  'uc': 0, 'country': 'SE'}, name=9998) #6391
         self.gen = self.gen.append(row, ignore_index=False)
+
+        self.line.loc[11603, 'length'] = 8489.612674
 
     def branch_params(self):
         #, ohm_per_km, compensate, trafo_x
         """ Make some assumptions on branch parameters for lines and transformers.
         Note: X and B are per phase!
         """
-        ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
-        #ohm_per_km = [0.38, 0.40, 0.42]#[0.38, 0.368, 0.42]
+        #ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
+        ohm_per_km = [0.38, 0.368, 0.42, 0.44]
         S_per_km = [1/13.8, 1/13.2, 1/12.5]  # line charging susceptance [380, 300, <=220] kV lines, Siemens/km^2
-        compensate = [0.40, 380, 200]  # Series compensation for long high-voltage lines [compensation factor, min voltage (kV), min length (km)]
-        trafo_x = [2.8e-4, 4e-4, 7e-4]  # transformer pu reactance for [380,300,<300] kV per Sbase
-        #trafo_x = [2.8e-4, 4e-4, 1.5e-3]
+        compensate = [0.5, 380, 200]  # Series compensation for long high-voltage lines [compensation factor, min voltage (kV), min length (km)]
+        #trafo_x = [2.8e-2, 4e-2, 7e-2]  # transformer pu reactance for [380,300,<300] kV
+        trafo_x = [0.028, 0.04, 0.15]
         XR = [8.2, 6.625, 5.01667, 50]  # X/R for [380, 300, 220] kV lines and transformers
 
         line, trafo = self.line, self.trafo
 
         # Assigning reactance to corresponding lines
-        line['X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        line['X'] = ohm_per_km[3] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line.loc[line.Vbase == 380, 'X'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line.loc[line.Vbase == 300, 'X'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
-        #line.loc[line.Vbase == 132, 'X'] = ohm_per_km[3] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
-        #line.loc[line.circuits == 2, 'X'] *= 0.6
+        line.loc[line.Vbase == 220, 'X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.circuits == 2, 'X'] *= 0.5
         #line.loc[(line.Vbase == 380) & (line.circuits == 2), 'X'] = ohm_per_km[4] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         #line.loc[(line.Vbase == 300) & (line.circuits == 2), 'X'] = ohm_per_km[5] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         #line.loc[(line.Vbase == 220) & (line.circuits == 2), 'X'] = ohm_per_km[6] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         #line.loc[(line.Vbase == 132) & (line.circuits == 2), 'X'] = ohm_per_km[7] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
+
         # Assigning resistance to corresponding lines
         line['R'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[2]
         line.loc[line.Vbase == 380, 'R'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[0]
         line.loc[line.Vbase == 300, 'R'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[1]
+        line.loc[line.circuits == 2, 'R'] *= 0.5
+
         # Assigning compensation factor to long transmission lines
-        comp = (line.Vbase >= compensate[1]) & (line.length >= compensate[2] * 1000)
+        comp = (line.Vbase >= compensate[1]) & (line.length >= compensate[2] * 1000)# & (line.area0 == 'SE3')
         line.loc[comp, 'X'] -= compensate[0] * line.loc[comp, 'X']
+
         # Line Charging susceptance
         #line['B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         #line.loc[line.Vbase == 380, 'B'] = S_per_km[0] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
@@ -263,15 +290,23 @@ class N490:
         line.loc[line.Vbase == 300, 'B'] = S_per_km[1] / ((line['length'] / 1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
 
         # transformers
+        # Include this section if turns ratio is not part of the transformer database
+        """ 
         v0 = self.bus.loc[trafo.bus0, 'Vbase']  # voltage at bus0
         v1 = self.bus.loc[trafo.bus1, 'Vbase']  # voltage at bus1
         v0_array = [_ for _ in v0]
         v1_array = [_ for _ in v1]
-        # v = arr(np.maximum(v0, v1))  # max voltage
-        v = arr(np.maximum(v0_array, v1_array))
-        trafo['X'] = trafo_x[2] * self.baseMVA
-        trafo.iloc[v == 380, list(trafo).index('X')] = trafo_x[0] * self.baseMVA
-        trafo.iloc[v == 300, list(trafo).index('X')] = trafo_x[1] * self.baseMVA
+        v = arr(np.maximum(v0_array, v1_array)) # to find maximum voltage
+        turn = [x/y for x, y in zip(v0_array, v1_array)] # calculating the turns ratio for each transformer
+        trafo['ratio'] = turn
+        self.trafo['ratio'] = turn
+        """
+        trafo.loc[trafo.ratio == 132/380, 'X'] = trafo_x[0]
+        trafo.loc[trafo.ratio == 220/380, 'X'] = trafo_x[0]
+        trafo.loc[trafo.ratio == 300/380, 'X'] = trafo_x[0]
+        trafo.loc[trafo.ratio == 132/300, 'X'] = trafo_x[1]
+        trafo.loc[trafo.ratio == 220/300, 'X'] = trafo_x[1]
+        trafo.loc[trafo.ratio == 132/220, 'X'] = trafo_x[2]
         trafo['R'] = trafo['X'] / XR[3]
         trafo['B'] = 0
 
@@ -349,7 +384,7 @@ class N490:
             for t in list(raw[b]):  # iterate over gen types
                 gen.loc[:, (b, gen_key[t])] += arr(raw[b][t])
 
-        # Possibly adjust entso-e generation so sum equals nordpool
+        # Possibly adjust entso-e generation so sum equals Nordpool
         db = nordpool.Database()
         if adjust_gen:
             gen_np = db.select_data(table='production', starttime=start, endtime=stop)
@@ -408,7 +443,7 @@ class N490:
 
         # Check that all Nordpool exchanges has been taken into account
         if exch.shape[1] != nn and warnings:
-            print('Some Nordpool exchanges are not included in model.')
+            print('Some Nordpool exchanges are not included in model')
 
         self.flow_measured = ac_flow
         self.flow_modelled = pd.DataFrame(0, index=time, columns=list(ac_flow))
@@ -424,7 +459,7 @@ class N490:
         print('\n*** Distributing power and running DCPF ***')
         day = 'yyyy-mm-dd'  # print progress each day
         for n, t in enumerate(self.time):
-            self.distribute_power(load, gen, link, n, gen_equals_load=False)
+            self.distribute_power(load, gen, link, n, gen_equals_load=True)
             self.dcpf(n, save2network=False)
             if t.strftime('%Y-%m-%d') != day:
                 day = t.strftime('%Y-%m-%d')
@@ -452,6 +487,14 @@ class N490:
                     if share > 1 and warnings:
                         print('Not enough %s capacity in %s (%d vs %d MW)' % (
                             t.lower(), b, available, gen.at[time, (b, t)]))
+                    """
+                    if share <= 1:
+                        self.gen.loc[ind, 'P'] = self.gen.loc[ind, 'Pmax'] * share
+                    else:
+                        if 
+                        self.gen.loc[ind, 'P'] = self.gen.loc[ind, 'Pmax']
+                        neg_load.at[b, 'load'] += gen.at[time, (b, t)] - available
+                    """
 
         # Wind
         self.farms['P'] = 0.
@@ -465,6 +508,13 @@ class N490:
                 self.farms.loc[ind, 'P'] = self.farms.loc[ind, 'Pmax'] * share
                 if share > 1 and warnings:
                     print('Not enough wind capacity in %s (%d vs %d MW)' % (b, available, gen.at[time, (b, 'Wind')]))
+                """
+                if share <= 1:
+                    self.farms.loc[ind, 'P'] = self.farms.loc[ind, 'Pmax'] * share
+                else:
+                    self.farms.loc[ind, 'P'] = self.farms.loc[ind, 'Pmax']
+                    neg_load.at[b, 'load'] += gen.at[time, (b, t)] - available
+                """
 
         # Load including wind (+PV) and negative load
         self.bus['load'] = 0
@@ -477,10 +527,8 @@ class N490:
 
         for b in self.bidz:
             ind = self.bus.index[self.bus.bidz == b]
-            bidz_load = load.at[time, b]
+            bidz_load = load.at[time, b] - neg_load.at[b, 'load']
             self.bus.loc[ind, 'load'] += self.bus.loc[ind, 'load_share'] * bidz_load
-        #for i, row in self.gen.iterrows():
-            #self.bus.at[int(row.bus), 'load'] -= row.P
         for i, row in self.farms.iterrows():  # wind as negative load
             self.bus.at[int(row.bus), 'load'] -= row.P
 
@@ -501,24 +549,29 @@ class N490:
 
         # Adjust generation so it equals load (for DC power flow)
         if gen_equals_load:
-            self.gen.P *= self.bus.load.sum() / self.gen.P.sum()
+            imbal = self.gen.P.sum() - self.bus.load.sum()
+            #self.gen.P *= self.bus.load.sum()/self.gen.P.sum()
+            #self.bus.load *= self.gen.P.sum() / self.bus.load.sum()
+            for b in self.bidz:
+                ratio = np.sum(self.bus.loc[self.bus.bidz == b, 'load']) / self.bus.load.sum()
+                self.bus.loc[self.bus.bidz == b, 'load'] += self.bus.loc[self.bus.bidz == b, 'load_share'] * ratio*imbal
 
 
     def make_mpc(self):
         """ Make matpower/pypower case (mostly DC parameters for now).
         Safer to use bus_idx etc. to find correct columns for pypower version in question?"""
-        bus, line, trafo, gen = self.bus, self.line, self.trafo, self.gen
+        bus, line, trafo, gen, farms = self.bus, self.line, self.trafo, self.gen, self.farms
         mpc = {'version': '2', 'baseMVA': self.baseMVA}
 
         # bus
         mpc['bus'] = np.zeros((len(bus), 13))
         mpc['bus'][:, 0] = bus.index
         mpc['bus'][:, 1] = [2 if np.sum(gen.Pmax.loc[gen.bus == b]) > 0 else 1 for b in bus.index]  # PV/PQ
-        mpc['bus'][find(mpc['bus'][:, 1] == 2)[0], 1] = 3  # ref
+        mpc['bus'][find(mpc['bus'][:, 1] == 2)[0], 1] = 3  # slack bus
         mpc['bus'][:, 2] = bus.load
         mpc['bus'][:, 6] = mult_ind(bus.bidz, self.bidz) + 1  # bid zone index as area
         mpc['bus'][:, 7] = 1  # voltage (pu)
-        mpc['bus'][:, 9] = bus.Vbase
+        mpc['bus'][:, 9] = bus.Vbase # base voltage (kV)
         mpc['bus'][:, 10] = 1 # zone
         mpc['bus'][:, 11] = 0.90 # Vmin
         mpc['bus'][:, 12] = 1.15 # Vmax
@@ -536,13 +589,14 @@ class N490:
 
         # branch
         br = pd.concat([line, trafo], sort=False)
+        br['ratio'].fillna(0, inplace=True)  # Remove NaN values
         mpc['branch'] = np.zeros((len(br), 13))
         mpc['branch'][:, 0] = br.bus0
         mpc['branch'][:, 1] = br.bus1
         mpc['branch'][:, 2] = br.R
         mpc['branch'][:, 3] = br.X
         mpc['branch'][:, 4] = br.B
-        mpc['branch'][:, 8] = [1 if np.isnan(ug) else 0 for ug in br.ug]  # transformer off nominal turns ratio
+        mpc['branch'][:, 8] = br.ratio # transformer off nominal turns ratio
         mpc['branch'][:, 10] = 1  # 1 for in-service
         mpc['branch'][:, 11] = -360 # minimum angle difference
         mpc['branch'][:, 12] = 360  # maximum angle difference
@@ -556,10 +610,10 @@ class N490:
             time = self.flow_modelled.index[time]
         if mpc is None:
             mpc = self.make_mpc()
-        mpc = runpf(mpc, ppoption(VERBOSE=0, OUT_ALL=-1, OUT_BUS=0, OUT_ALL_LIM=0, OUT_BRANCH=0, OUT_SYS_SUM=0))
+        mpc = rundcpf(mpc, ppoption(VERBOSE=0, OUT_ALL=-1, OUT_BUS=0, OUT_ALL_LIM=0, OUT_BRANCH=0, OUT_SYS_SUM=0))
         self.solved_mpc.append(mpc)
 
-        # AC exchange between areas.
+        # AC exchange between areas
         br = mpc[0]['branch']
         ac_flow = pd.DataFrame(0, index=[time], columns=list(self.flow_modelled))
         bid0 = arr(self.bus.loc[br[:, 0], 'bidz'])
