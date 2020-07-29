@@ -247,16 +247,16 @@ class N490:
 
         self.line.loc[11603, 'length'] = 8489.612674
 
-    def branch_params(self, ohm_per_km, trafo_x):
+    def branch_params(self):
         """ Assigning branch parameters for the lines
         Note: X and B are per phase! """
 
         #ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
-        #ohm_per_km = [0.542, 0.538, 0.562]#[0.441, 0.428, 0.485]
+        ohm_per_km = [0.542, 0.538, 0.562]#[0.441, 0.428, 0.485]
         S_per_km = [1/13.8, 1/13.2, 1/12.5] # line charging susceptance [380, 300, <=220] kV lines in Siemens/km^2
         compensate = [0.5, 380, 200] # Series compensation for long high-voltage lines [compensation factor, min voltage (kV), min length (km)]
         #trafo_x = [2.8e-2, 4e-2, 7e-2] # transformer pu reactance for [380,300,<300] kV
-        #trafo_x = [0.028, 0.04, 0.15]
+        trafo_x = [0.028, 0.04, 0.15]
         XR = [8.2, 6.625, 5.01667, 50] # X/R for 380, 300, 220 kV lines and transformers respectively
         line, trafo = self.line, self.trafo
 
