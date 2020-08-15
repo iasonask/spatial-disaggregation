@@ -34,26 +34,6 @@ m.compare_flows() # see how interarea flows compare with measurements
 m.save_mat('test.mat') # save in Matpower format
 ```
 
-### Branch Parameters 
-```python
-from nordic490 import N490
-ohm_per_km = []
-err = []
-i = 0.26
-while i < 0.36:
-    ohm_per_km = [i, 1.07723*i, 1.22357*i]
-    m = N490(year=2018)
-    m.branch_params(ohm_per_km) # simple assumptions on R, X and B
-    #m.time_series('20180101:00','20180107:23')
-    load, gen, link = m.get_measurements('20180120:18') # download data for a certain hour
-    m.distribute_power(load, gen, link) # distribute on buses and gens (simple method)
-    m.dcpf() # solve DC power flow
-    a = m.calculate_errors() # see how interarea flows compare with measurements
-    err.append((i, a['MAE'].sum()))         
-    i += 0.002
-print(err)
-```
-
 ### Time series
 ```python
 from nordic490 import N490, plt
@@ -104,18 +84,6 @@ y.line_widths_from(w)
 y.add_topo()
 y.show()   
 ``` 
-
-#### Warnings
-
-mera warnings, t.ex. make_mpc() innan man gjort distribute_power()
-pickle dump blir stor om man läst in entsoe och nordpool samt kört dcpf (nästan 1MB per timme). Man kan ev bara spara
-relevanta parmetrar i solved_mpc (det mesta är ju samma för alla timmar)
-
-Skicka länk till lsod med muni load   
-
-sommartid fel?
-
-nuc från entso-e 
 
 #### Notes
 An archive of more additional resources can be found [here](https://kth.box.com/s/ujly5s15dd5xkhdxk59r04ulks6mokrr) containing various other scripts and information  
