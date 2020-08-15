@@ -251,12 +251,10 @@ class N490:
         """ Assigning branch parameters for the lines
         Note: X and B are per phase! """
 
-        #ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
-        ohm_per_km = [0.542, 0.538, 0.562]#[0.441, 0.428, 0.485]
+        ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
         S_per_km = [1/13.8, 1/13.2, 1/12.5] # line charging susceptance [380, 300, <=220] kV lines in Siemens/km^2
         compensate = [0.5, 380, 200] # Series compensation for long high-voltage lines [compensation factor, min voltage (kV), min length (km)]
-        #trafo_x = [2.8e-2, 4e-2, 7e-2] # transformer pu reactance for [380,300,<300] kV
-        trafo_x = [0.028, 0.04, 0.15]
+        trafo_x = [2.8e-2, 4e-2, 7e-2] # transformer pu reactance for [380,300,<300] kV
         XR = [8.2, 6.625, 5.01667, 50] # X/R for 380, 300, 220 kV lines and transformers respectively
         line, trafo = self.line, self.trafo
 
@@ -264,13 +262,11 @@ class N490:
         line['X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line.loc[line.Vbase == 380, 'X'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
         line.loc[line.Vbase == 300, 'X'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
-        #line.loc[line.Vbase == 220, 'X'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA
 
         # Assigning resistance to corresponding lines
         line['R'] = ohm_per_km[2] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[2]
         line.loc[line.Vbase == 380, 'R'] = ohm_per_km[0] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[0]
         line.loc[line.Vbase == 300, 'R'] = ohm_per_km[1] * line['length'] / 1000 / line['Vbase'] ** 2 * self.baseMVA / XR[1]
-        #line.loc[line.circuits == 1, 'R'] *= 2 # higher resistance for single circuit lines
 
         # Assigning compensation factor to long transmission lines
         comp = (line.Vbase >= compensate[1]) & (line.length >= compensate[2] * 1000) & (line.area0 == 'SE3')
@@ -802,19 +798,3 @@ if __name__ == '__main__':
         mpc = m.make_mpc()
         mpc = rundcpf(mpc, ppoption(VERBOSE=0, OUT_ALL=-1, OUT_BUS=0, OUT_ALL_LIM=0, OUT_BRANCH=0))
         # mpc = runpf(mpc,ppoption(VERBOSE=0,OUT_ALL=-1,OUT_BUS=0,OUT_ALL_LIM=0,OUT_BRANCH=0,PF_ALG='NR'))
-
-"""
-        # Check balance per area
-        bal = pd.DataFrame(0,index=self.bidz,columns=['load','gen','ac','balance'])
-        for b in self.bidz:
-            ind = self.bus.index[self.bus.bidz == b]
-            bal.at[b,'load'] = -np.sum(self.bus.loc[ind,'load'])
-            ind = self.gen.index[self.gen.bidz == b]
-            bal.at[b,'gen'] = np.sum(self.gen.loc[ind,'P'])
-            ind = ac_flow.index[ac_flow.area0 == b]
-            bal.at[b,'ac'] = np.sum(ac_flow.loc[ind,'exch'])
-            ind = ac_flow.index[ac_flow.area1 == b]
-            bal.at[b,'ac'] -= np.sum(ac_flow.loc[ind,'exch'])
-        bal['balance'] = np.sum(bal,axis=1)
-
-"""
