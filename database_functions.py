@@ -24,7 +24,7 @@ def modify_network():
 
     # Improve load distribution in Sweden
     "Read the load file for Sweden"
-    Se = pd.read_excel("Data/Loads/Se.xlsx", index_col=0)  # Direct to the path where load data is stored
+    Se = pd.read_excel("Data/Loads/Sweden.xlsx", index_col=0)  # Direct to the path where load data is stored
     # Update load_share with new data
     for i, row1 in bus.iterrows():
         for j, row2 in Se.iterrows():
@@ -34,7 +34,7 @@ def modify_network():
 
     # Load distribution for Norway
     "Read the load file for Norway"
-    No = pd.read_excel("Data/Loads/No.xlsx", index_col=0)  # Direct to the path where load data is stored
+    No = pd.read_excel("Data/Loads/Norway.xlsx", index_col=0)  # Direct to the path where load data is stored
     # Update load_share with new data
     for i, row1 in bus.iterrows():
         for j, row2 in No.iterrows():
@@ -44,7 +44,7 @@ def modify_network():
 
     # Load distribution for Finland
     "Read the load file for Finland"
-    Fi = pd.read_excel("Data/Loads/Fi.xlsx", index_col=0)  # Direct to the path where load data is stored
+    Fi = pd.read_excel("Data/Loads/Finland.xlsx", index_col=0)  # Direct to the path where load data is stored
     # Update load_share with new data
     for i, row1 in bus.iterrows():
         for j, row2 in Fi.iterrows():
@@ -54,7 +54,7 @@ def modify_network():
 
     # Load distribution for Denmark
     "Read the load file for Denmark"
-    Dk = pd.read_excel("Data/Loads/Dk.xlsx", index_col=0)  # Direct to the path where load data is stored
+    Dk = pd.read_excel("Data/Loads/Denmark.xlsx", index_col=0)  # Direct to the path where load data is stored
     # Update load_share with new data
     for i, row1 in bus.iterrows():
         for j, row2 in Dk.iterrows():

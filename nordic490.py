@@ -6,7 +6,7 @@ Created on Tue Oct 23 12:48:13 2018
 
 Edited
 
-@by : Aravind S Kumar
+@by : Aravind
 
 """
 
@@ -53,7 +53,6 @@ class N490:
         self.gen_type = ['Nuclear', 'Hydro', 'Thermal', 'Wind']  # Main gen types
         self.load_data(topology_file)  # load network data from xlsx, npy etc.
         self.prepare_network(year)  # possibly remove too new or old data, check islands
-        #self.modify_network(year)  # remove too new or old data, check islands and update loads in the countries
         self.flow_measured = []  # store measured AC flows between areas
         self.flow_modelled = []  # store modelled -"- from e.g. dcpf()
         self.solved_mpc = []  # store solved cases
@@ -123,129 +122,6 @@ class N490:
             data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE2', 'bus': 6540,
                   'uc': 0, 'country': 'SE'}, name=9998)  # 6391
         self.gen = self.gen.append(row, ignore_index=False)
-
-    def modify_network(self, year):
-
-        """ Function to improve load distribution at buses """
-
-        "Remove dismantled or not yet constructed equipment, check islands etc."
-        if year is True:
-            year = pd.Timestamp.now().year
-
-        # remove equipment
-        if year is not None:
-            for df in self.dfs:
-                data = getattr(self, df)
-                data.drop(data[data.uc > year].index, inplace=True)  # not yet constructed
-                data.drop(data[(data.uc < 0) & (-data.uc <= year)].index, inplace=True)  # dismantled
-
-        # remove island buses
-        ibus = self.find_islands()
-        if len(ibus) > 0:
-            self.bus.drop(ibus, axis=0, inplace=True)
-            if warnings:
-                print('The following island buses were removed: %s' % str(ibus))
-
-        "Resetting the assigned loads "
-        self.bus.loc[:, 'load_share'] = 0
-
-        # Improve load distribution in Sweden
-
-        "Read the load file for Sweden"
-        Sl = pd.read_excel("Data/Loads/Se.xlsx", index_col=0)
-
-        # Update load_share with new data
-        for i, row1 in self.bus.iterrows():
-            for j, row2 in Sl.iterrows():
-                if row1['country'] == 'SE':
-                    if row2['bus'] == i:
-                        self.bus.loc[i, 'load_share'] += row2['Load']
-
-        # Improved Load distribution Norway
-
-        "Read the load file for Norway"
-        No = pd.read_excel("Data/Loads/No.xlsx", index_col=0)
-        No.loc[1428, 'bus'] = 6478
-        No.loc[1428, 'bidz'] = 'NO5'
-        No.loc[1546, 'bus'] = 6478
-        No.loc[1546, 'bidz'] = 'NO5'
-
-        # Update load_share with new data
-        for i, row1 in self.bus.iterrows():
-            for j, row2 in No.iterrows():
-                if row1['country'] == 'NO':
-                    if row2['bus'] == i:
-                        self.bus.loc[i, 'load_share'] += row2['Load']
-
-        # Improved Load distribution Finland
-
-        "Read the load file for Finland"
-        Fi = pd.read_excel("Data/Loads/Fi.xlsx", index_col=0)
-
-        # Update load_share with new data
-        for i, row1 in self.bus.iterrows():
-            for j, row2 in Fi.iterrows():
-                if row1['country'] == 'FI':
-                    if row2['bus'] == i:
-                        self.bus.loc[i, 'load_share'] += row2['Load']
-
-        # Improved Load distribution Denmark
-
-        "Read the load file for Denmark"
-        Dk = pd.read_excel("Data/Loads/Dk.xlsx", index_col=0)
-        # Update load_share with new data
-        for i, row1 in self.bus.iterrows():
-            for j, row2 in Dk.iterrows():
-                if row1['country'] == 'DK':
-                    if row2['bus'] == i:
-                        self.bus.loc[i, 'load_share'] += row2['Load']
-
-        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
-
-        # wind power
-        f = self.farms
-        f.drop(f[(f.status > 1) & ~f.uc].index, inplace=True)
-        self.farms.loc['1280-V-002', 'bus'] = 5572
-        self.farms.loc['1280-V-002', 'bidz'] = 'SE4'
-        self.farms.loc['1280-V-002_2', 'bus'] = 5572
-        self.farms.loc['1280-V-002_2', 'bidz'] = 'SE4'
-        self.farms.loc['0885-V-001', 'bus'] = 6125
-        self.farms.loc['0885-V-003', 'bus'] = 6125
-        self.farms.loc['0885-V-017', 'bus'] = 6125
-        self.farms.loc['0885-V-017_2', 'bus'] = 6125
-        self.farms.loc['0885-V-001', 'bidz'] = 'SE4'
-        self.farms.loc['0885-V-003', 'bidz'] = 'SE4'
-        self.farms.loc['0885-V-017', 'bidz'] = 'SE4'
-        self.farms.loc['0885-V-017_2', 'bidz'] = 'SE4'
-
-
-        # existing wind farms on removed buses (iloc) -> find closest existing bus
-        ind = find(np.isnan(mult_ind(f.bus, self.bus.index)))
-        d = cdist(arr(f.iloc[ind, mult_ind(['x', 'y'], list(f))]), arr(self.bus.loc[:, ['x', 'y']]))
-        bus = arr(self.bus.index[np.argmin(d, axis=1)])
-        f.iloc[ind, list(f).index('bus')] = bus
-
-        # update load_shares
-        for b in self.bidz:
-            sum_share = self.bus.loc[self.bus.bidz == b, 'load_share'].sum()
-            self.bus.loc[self.bus.bidz == b, 'load_share'] *= 1 / sum_share
-
-        self.bus['load_share'].fillna(0, inplace=True)  # Remove NaN values
-
-        "To model Norway-Russia transmission line and power exchanges (Modelled as HVDC line) "
-        row = pd.Series(data={'name': 'NO-RU', 'area0': 'NO4', 'area1': 'RU', 'uc': 0, 'bus0': 6809, 'bus1': 6825, 'lat': [69.5197659037814, 69.682236152263], 'lon': [30.3618854961022, 30.1205975038978], 'x': [1094400.04873005, 1080765.43901409], 'y': [7787528.1372227, 7802824.04243818], 'source': 'Pypsa 2019-09-04', 'info': 'The 132kV line between NO4-Ru is modelled as a link'}, name=1328)
-        self.link = self.link.append(row, ignore_index=False)
-
-        row = pd.Series(data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE1', 'bus': 6666,
-                              'uc': 0, 'country': 'SE'}, name=9999)#6672
-        self.gen = self.gen.append(row, ignore_index=False)
-
-        row = pd.Series(
-            data={'name': 'test', 'type': 'Thermal', 'type2': 'oil', 'Pmax': 1000, 'bidz': 'SE2', 'bus': 6540,
-                  'uc': 0, 'country': 'SE'}, name=9998) #6391
-        self.gen = self.gen.append(row, ignore_index=False)
-
-        self.line.loc[11603, 'length'] = 8489.612674
 
     def branch_params(self):
         """ Assigning branch parameters for the lines
@@ -446,16 +322,16 @@ class N490:
     def time_series(self, start, stop):
         """ Download hourly time series between start and stop and run dc power flow for each hour."""
 
-        #print('\n*** Accessing data from Entso-E and Nordpool ***')
+        print('\n*** Accessing data from Entso-E and Nordpool ***')
         load, gen, link = self.get_measurements(start, stop)
-        #print('\n*** Distributing power and running DCPF ***')
+        print('\n*** Distributing power and running DCPF ***')
         day = 'yyyy-mm-dd'  # print progress each day
         for n, t in enumerate(self.time):
             self.distribute_power(load, gen, link, n, gen_equals_load=True)
             self.dcpf(n, save2network=False)
             if t.strftime('%Y-%m-%d') != day:
                 day = t.strftime('%Y-%m-%d')
-                #print(day)
+                print(day)
 
     def distribute_power(self, load, gen, link, time=0, gen_equals_load=True):
         """ Determine load, generation at each bus based on bid zone totals.
@@ -499,7 +375,8 @@ class N490:
             ind = self.bus.index[self.bus.bidz == b]
             bidz_load = load.at[time, b] - neg_load.at[b, 'load'] # total consumption in bidding zone - curtailed generation
             self.bus.loc[ind, 'load'] += self.bus.loc[ind, 'load_share'] * bidz_load # distrubuting the net consumption among buses
-        for i, row in self.farms.iterrows():  # wind as negative load
+        # wind as negative load - comment out this section if modelling wind as generator
+        for i, row in self.farms.iterrows():
             self.bus.at[int(row.bus), 'load'] -= row.P
 
         # DC (load or negative load at nordic bus)
@@ -518,10 +395,9 @@ class N490:
                     print('No bus found for link %s (%d)' % (row['name'], row.name))
 
         # Adjust generation so it equals load (for DC power flow)
+        """To ensure power balance for dc power flow due to discrepancy in the Nordpool database"""
         if gen_equals_load:
-            imbal = self.gen.P.sum() - self.bus.load.sum() #+ self.farms.P.sum()
-            #self.gen.P *= self.bus.load.sum()/self.gen.P.sum()
-            #self.bus.load *= self.gen.P.sum() / self.bus.load.sum()
+            imbal = self.gen.P.sum() - self.bus.load.sum() #+ self.farms.P.sum() #uncomment this part for wind as gen
             for b in self.bidz:
                 ratio = np.sum(self.bus.loc[self.bus.bidz == b, 'load']) / self.bus.load.sum()
                 self.bus.loc[self.bus.bidz == b, 'load'] += self.bus.loc[self.bus.bidz == b, 'load_share'] * ratio * imbal
@@ -531,7 +407,7 @@ class N490:
         Safer to use bus_idx etc. to find correct columns for pypower version in question?"""
 
         bus, line, trafo, gen, farms = self.bus, self.line, self.trafo, self.gen, self.farms
-        #gen = pd.concat([gen, farms], sort=False)
+        #gen = pd.concat([gen, farms], sort=False)  # To model wind as generator, uncomment this line
         mpc = {'version': '2', 'baseMVA': self.baseMVA}
 
         # bus
@@ -575,7 +451,7 @@ class N490:
         mpc['branch'][:, 11] = -360 # minimum angle difference
         mpc['branch'][:, 12] = 360  # maximum angle difference
 
-        ## -----  OPF Data  ----- ##  --> Currently assumes zero costs for generators, needs to be fixed
+        ## -----  OPF Data  ----- ##  --> Currently not implemented, needs to be fixed
         # generator cost data
         # Model -> 1 - piecewise linear function, 2 - polynomial function
         # 1 | startup | shutdown | n | x1 | y1 | ... | xn | yn
