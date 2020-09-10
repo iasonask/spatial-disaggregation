@@ -489,7 +489,7 @@ class N490:
         for i in list(ac_flow):
             self.flow_modelled.at[time, i] = ac_flow.at[time, i]
         if save2network:
-            self.mpc2network(time)  # add parameters to network (flows, voltage angle etc.)
+            self.mpc2network()  # add parameters to network (flows, voltage angle etc.)
 
     def compare_flows(self, n=None, plot=True):
         """Compare flow_measured with flow_modelled

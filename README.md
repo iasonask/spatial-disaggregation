@@ -31,7 +31,6 @@ load, gen, link = m.get_measurements('20180120:18') # download data for a certai
 m.distribute_power(load, gen, link) # distribute on buses and gens (simple method)
 m.dcpf() # solve DC power flow
 m.compare_flows() # see how interarea flows compare with measurements
-m.save_mat('test.mat') # save in Matpower format
 ```
 
 ### Time series
