@@ -9,7 +9,7 @@ This class can be used for:
 6) plotting
 7) export
 
-For using the N490 class you need to extract the [Data](https://kth.box.com/s/9dsamj32fh490df38qx6temd8agwd6hm) folder in the project's directory
+For using the N490 class you need to extract the [Data](https://kth.box.com/s/hxfpjlx8kkszs8pp3hhj6qqx5pdpf0tw) folder in the project's directory
 
 ### *** Examples ***
 

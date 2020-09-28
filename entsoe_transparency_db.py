@@ -676,6 +676,7 @@ class Database():
         c = conn.cursor()
 
         # create separeate table for SE data
+        # create separeate table for SE data
         c.execute('DROP TABLE IF EXISTS se_gen_per_type')
         c.execute('CREATE TABLE se_gen_per_type (' + \
                   'time TEXT NOT NULL,' + \
