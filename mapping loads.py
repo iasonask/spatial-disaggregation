@@ -296,7 +296,7 @@ plt.subplots_adjust(bottom=0.01, top=0.99, left=0.01, right=0.99)
 plt.show()
 
 """To modify bus allocation for generators"""
-gen = pickle.load(open('gen_org.pkl', 'rb'))
+gen = pickle.load(open('Data/gen.pkl', 'rb'))
 
 loc = cdist(arr(gen.iloc[:, mult_ind(['x', 'y'], list(gen))]), arr(bus.loc[:, ['x', 'y']]))
 pos = arr(bus.index[np.argmin(loc, axis=1)])
@@ -408,7 +408,7 @@ plt.subplots_adjust(bottom=0.01, top=0.99, left=0.01, right=0.99)
 plt.show()
 
 """To modify bus allocation for wind farms"""
-farms = pickle.load(open('farms_org.pkl', 'rb'))
+farms = pickle.load(open('Data/farms.pkl', 'rb'))
 
 loc = cdist(arr(farms.iloc[:, mult_ind(['x', 'y'], list(farms))]), arr(bus.loc[:, ['x', 'y']]))
 pos = arr(bus.index[np.argmin(loc, axis=1)])
