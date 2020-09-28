@@ -89,7 +89,7 @@ bus = pd.read_excel("N490.xlsx", index_col=0)
 # Assign Loads in Norway to buses
 
 "Read the load file for Norway"
-No = pd.read_excel("Norway.xlsx", index_col=0)
+No = pd.read_excel("Data/Loads/Norway.xlsx", index_col=0)
 
 # Find the nearest bus
 loc = cdist(arr(No.iloc[:, mult_ind(['x', 'y'], list(No))]), arr(bus.loc[:, ['x', 'y']]))
@@ -156,7 +156,7 @@ for i, row in No.iterrows():
 # Assign loads in Sweden to buses
 
 "Read the load file for Sweden"
-Se = pd.read_excel("Sweden.xlsx", index_col=0)
+Se = pd.read_excel("Data/Loads/Sweden.xlsx", index_col=0)
 
 # Find the nearest bus
 loc = cdist(arr(Se.iloc[:, mult_ind(['x', 'y'], list(Se))]), arr(bus.loc[:, ['x', 'y']]))
@@ -216,7 +216,7 @@ for i, row in Se.iterrows():
 
 # Assign loads in Finland to buses
 "Read the load file for Finland"
-Fi = pd.read_excel("Finland.xlsx", index_col=0)
+Fi = pd.read_excel("Data/Loads/Finland.xlsx", index_col=0)
 
 # To find the nearset bus
 loc = cdist(arr(Fi.iloc[:, mult_ind(['x', 'y'], list(Fi))]), arr(bus.loc[:, ['x', 'y']]))
@@ -247,7 +247,7 @@ for i, row in Fi.iterrows():
 
 # Assign loads in Denmark to buses
 "Read the load file for Denmark"
-Dk = pd.read_excel("Denmark.xlsx", index_col=0)
+Dk = pd.read_excel("Data/Loads/Denmark.xlsx", index_col=0)
 
 # To find nearest bus
 loc = cdist(arr(Dk.iloc[:, mult_ind(['x', 'y'], list(Dk))]), arr(bus.loc[:, ['x', 'y']]))
