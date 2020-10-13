@@ -140,4 +140,15 @@ dmypy.json
 
 # Data files folder
 Data/
+Data_backup/
 test.mat
+
+# vscode workspace
+*.code-workspace
+.vscode/
+
+# data files
+*.xlsx
+
+# python venv
+venv38/
