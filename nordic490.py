@@ -128,7 +128,7 @@ class N490:
         Note: X and B are per phase! """
 
         ohm_per_km = [0.246, 0.265, 0.301] # for [380, 300, <=220] kV lines
-        S_per_km = [1/13.8, 1/13.2, 1/12.5] # line charging susceptance [380, 300, <=220] kV lines in Siemens/km^2
+        S_per_km = [100*3.14*13.8e-9, 100*3.14*13.2e-9, 100*3.14*12.5e-9] # line charging susceptance [380, 300, <=220] kV lines in Ohm*km
         compensate = [0.5, 380, 200] # Series compensation for long high-voltage lines [compensation factor, min voltage (kV), min length (km)]
         trafo_x = [2.8e-2, 4e-2, 7e-2] # transformer pu reactance for [380,300,<300] kV
         XR = [8.2, 6.625, 5.01667, 50] # X/R for 380, 300, 220 kV lines and transformers respectively
@@ -152,9 +152,9 @@ class N490:
         #line['B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         #line.loc[line.Vbase == 380, 'B'] = S_per_km[0] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         #line.loc[line.Vbase == 300, 'B'] = S_per_km[1] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
-        line['B'] = S_per_km[2] / ((line['length']/1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
-        line.loc[line.Vbase == 380, 'B'] = S_per_km[0] / ((line['length'] / 1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
-        line.loc[line.Vbase == 300, 'B'] = S_per_km[1] / ((line['length'] / 1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
+        line['B'] = S_per_km[2] / (line['length']/1000) / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.Vbase == 380, 'B'] = S_per_km[0] / (line['length'] / 1000) / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.Vbase == 300, 'B'] = S_per_km[1] / (line['length'] / 1000) / line['Vbase'] ** 2 * self.baseMVA
 
         # transformers
         # Include this section if turns ratio is not included in the transformer database
@@ -375,6 +375,7 @@ class N490:
             ind = self.bus.index[self.bus.bidz == b]
             bidz_load = load.at[time, b] - neg_load.at[b, 'load'] # total consumption in bidding zone - curtailed generation
             self.bus.loc[ind, 'load'] += self.bus.loc[ind, 'load_share'] * bidz_load # distrubuting the net consumption among buses
+
         # wind as negative load - comment out this section if modelling wind as generator
         for i, row in self.farms.iterrows():
             self.bus.at[int(row.bus), 'load'] -= row.P
