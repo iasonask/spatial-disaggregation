@@ -152,9 +152,9 @@ class N490:
         #line['B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         #line.loc[line.Vbase == 380, 'B'] = S_per_km[0] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         #line.loc[line.Vbase == 300, 'B'] = S_per_km[1] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
-        line['B'] = S_per_km[2] / ((line['length']/1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
-        line.loc[line.Vbase == 380, 'B'] = S_per_km[0] / ((line['length'] / 1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
-        line.loc[line.Vbase == 300, 'B'] = S_per_km[1] / ((line['length'] / 1000) ** 2) / line['Vbase'] ** 2 * self.baseMVA
+        line['B'] = S_per_km[2] / (line['length']/1000) / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.Vbase == 380, 'B'] = S_per_km[0] / (line['length'] / 1000) / line['Vbase'] ** 2 * self.baseMVA
+        line.loc[line.Vbase == 300, 'B'] = S_per_km[1] / (line['length'] / 1000) / line['Vbase'] ** 2 * self.baseMVA
 
         # transformers
         # Include this section if turns ratio is not included in the transformer database
@@ -375,6 +375,7 @@ class N490:
             ind = self.bus.index[self.bus.bidz == b]
             bidz_load = load.at[time, b] - neg_load.at[b, 'load'] # total consumption in bidding zone - curtailed generation
             self.bus.loc[ind, 'load'] += self.bus.loc[ind, 'load_share'] * bidz_load # distrubuting the net consumption among buses
+
         # wind as negative load - comment out this section if modelling wind as generator
         for i, row in self.farms.iterrows():
             self.bus.at[int(row.bus), 'load'] -= row.P
