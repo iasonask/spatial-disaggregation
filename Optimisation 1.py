@@ -29,7 +29,7 @@ def objective(x):
     m = N490(year=2018)
     m.branch_params(ohm_per_km, trafo_x)
     # Make sure to modify the function to accept these parameters along with function call
-    m.time_series('20180101:00', '20180107:23')
+    m.time_series('20180101:00', '20180102:00')    
     err = m.calculate_errors()
     print(x, err['MAE'].sum())
 
