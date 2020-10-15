@@ -10,7 +10,7 @@ import json
 start_date = datetime(2018, 1, 1, 0)
 # get rid of seconds and microseconds component
 start_date.replace(second=0, microsecond=0)
-end_date = datetime(2018, 1, 1, 16)
+end_date = datetime(2018, 12, 12, 0)
 end_date.replace(second=0, microsecond=0)
 interval = (end_date - start_date)/cpu_count()
 def str_frm_int(i):
@@ -40,7 +40,7 @@ def optimize_interval(intervals, solutions):
     bz2 = (0.2, 0.4)
     bz3 = (0.2, 0.4)
     bounds = (bz1, bz2, bz3)
-    sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-3, 'maxiter': 1})
+    sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-3})
     print(sol)
     solutions[procnum] = {'PID':procnum, 'x':sol.x.tolist(), 'fun':sol.fun , 'solution':str(dict(sol)), 'interval':intervals}
 
