@@ -322,16 +322,16 @@ class N490:
     def time_series(self, start, stop):
         """ Download hourly time series between start and stop and run dc power flow for each hour."""
 
-        print('\n*** Accessing data from Entso-E and Nordpool ***')
+        # print('\n*** Accessing data from Entso-E and Nordpool ***')
         load, gen, link = self.get_measurements(start, stop)
-        print('\n*** Distributing power and running DCPF ***')
+        # print('\n*** Distributing power and running DCPF ***')
         day = 'yyyy-mm-dd'  # print progress each day
         for n, t in enumerate(self.time):
             self.distribute_power(load, gen, link, n, gen_equals_load=True)
             self.dcpf(n, save2network=False)
             if t.strftime('%Y-%m-%d') != day:
                 day = t.strftime('%Y-%m-%d')
-                print(day)
+                # print(day)
 
     def distribute_power(self, load, gen, link, time=0, gen_equals_load=True):
         """ Determine load, generation at each bus based on bid zone totals.
