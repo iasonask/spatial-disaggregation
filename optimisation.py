@@ -27,25 +27,25 @@ def objective(x):
     ohm_per_km = [x[0], x[1], x[2]]
     # trafo_x = [x[3], x[4], x[5]]
     m = N490(year=2018)
-    m.branch_params(ohm_per_km)
+    m.branch_params(ohm_per_km = ohm_per_km)
     # Make sure to modify the function to accept these parameters along with function call
-    m.time_series('20180101:00', '20181215:23')
+    m.time_series('20180301:00', '20180401:00')
     err = m.calculate_errors()
     print(x, err['MAE'].sum())
 
     return err['MAE'].sum()
 
 
-bz1 = (0.2, 0.6)
-bz2 = (0.2, 0.6)
-bz3 = (0.2, 0.6)
+bz1 = (0.2, 0.4)
+bz2 = (0.2, 0.4)
+bz3 = (0.2, 0.4)
 # bt1 = (2.8e-2, 1.5e-1)
 # bt2 = (4e-2, 1.5e-1)
 # bt3 = (7e-2, 1.5e-1)
 # bounds = (bz1, bz2, bz3, bt1, bt2, bt3)
 bounds = (bz1, bz2, bz3)
 
-sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-2})
+sol = minimize(objective, x0, method='SLSQP', bounds=bounds, options={'disp': True, 'eps': 1e-3})
 print(sol)
 
 """ To test the solution using a different solver """
