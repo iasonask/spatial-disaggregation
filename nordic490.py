@@ -184,6 +184,8 @@ class N490:
         self.bus['angle'] = mpc['bus'][:, 8]
         line = mpc['branch'][mpc['branch'][:, 8] == 0]
         self.line['flow'] = line[:, 13]
+        trafo = mpc['branch'][mpc['branch'][:, 8] == 1]
+        self.trafo['flow'] = trafo[:, 13]
 
     def get_measurements(self, start, stop=None, adjust_gen=True):
         """ Import load, generation per type and HVDC from entso-e and Nordpool.
