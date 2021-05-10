@@ -148,6 +148,26 @@ class N490:
         comp = (line.Vbase >= compensate[1]) & (line.length >= compensate[2] * 1000) & (line.area0 == 'SE3')
         line.loc[comp, 'X'] -= compensate[0] * line.loc[comp, 'X']
 
+        #Assigning capacities to corresponding lines
+        #Start with creating a dictionary that links Vbase ranges in kV to Capacities per circuit in MW
+        thermal_cap_per_circuit = dict()
+        for voltage in set(line.Vbase):
+            if 130 <= voltage <= 150:
+                thermal_cap_per_circuit[voltage] = 150
+            elif 220 <= voltage <= 245:
+                thermal_cap_per_circuit[voltage] = 400
+            elif 300 == voltage:
+                thermal_cap_per_circuit[voltage] = 1000
+            elif 380 <= voltage <= 400:
+                thermal_cap_per_circuit[voltage] = 1500
+            else:
+                thermal_cap_per_circuit[voltage] = "Unknown"
+        line['Cap'] = 0
+        for voltage in thermal_cap_per_circuit:
+            if thermal_cap_per_circuit[voltage] != "Unknown":
+                line.loc[line.Vbase==voltage,'Cap'] = thermal_cap_per_circuit[voltage]*line.circuits
+
+
         # Line Charging susceptance
         #line['B'] = S_per_km[2] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
         #line.loc[line.Vbase == 380, 'B'] = S_per_km[0] * line['length'] / 1000 * line['Vbase'] ** 2 / self.baseMVA
