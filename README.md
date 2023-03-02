@@ -9,7 +9,7 @@ This class can be used for:
 6) plotting
 7) export
 
-For using the N490 class you need to extract the [Data](https://kth.box.com/s/hxfpjlx8kkszs8pp3hhj6qqx5pdpf0tw) folder in the project's directory
+For using the N490 class you need to extract the [Data](https://kth-my.sharepoint.com/:u:/g/personal/iasonas_ug_kth_se/EZlhYvvhLLFEvUU4hphsK30B17IGFJdqharnn2P7H28B_g?e=6OwNDs) folder in the project's directory
 
 ### *** Examples ***
 
@@ -85,9 +85,9 @@ y.show()
 ``` 
 
 #### Notes
-An archive of more additional resources can be found [here](https://kth.box.com/s/ujly5s15dd5xkhdxk59r04ulks6mokrr) containing various other scripts and information  
 
-For installing all required packages automatically you can:
+For installing all required packages automatically you can create and activate a 
+virtual environment and then execute:
 
 ```bash
 pip install -r requirements.txt
