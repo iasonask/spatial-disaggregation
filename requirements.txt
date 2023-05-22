@@ -2,7 +2,7 @@ openpyxl==3.0.3
 prettytable==0.7.2
 pandas==1.0.1
 PYPOWER==5.1.4
-requests==2.22.0
+requests==2.31.0
 scipy==1.4.1
 numpy==1.22.0
 matplotlib==3.1.3
