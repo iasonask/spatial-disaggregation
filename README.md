@@ -1,20 +1,20 @@
 # spatial-disaggregation
 
 This class can be used for:
-1) read network topology, remove too old/new elements depending on scenario year
+1) Read network topology and remove too old/new elements depending on scenario year
 2) basic assumptions on branch parameters (+gen, bus; allt i mpc ska finnas i network)
-3) download data from Ensto-e and Nordpool for a given time
-4) simple scenario for load, generation etc on each bus
+3) Download data from Ensto-e and Nordpool for a given time
+4) simple scenario for load, generation, etc. on each bus
 5) DC power flow and AC power flow (AC requires more work...)
 6) plotting
 7) export
 
-For using the N490 class you need to extract the [Data](https://kth-my.sharepoint.com/:u:/g/personal/iasonas_ug_kth_se/EZlhYvvhLLFEvUU4hphsK30B17IGFJdqharnn2P7H28B_g?e=6OwNDs) folder in the project's directory
+For using the N490 class, you need to extract the [Data](https://kth-my.sharepoint.com/:u:/g/personal/iasonas_ug_kth_se/EZlhYvvhLLFEvUU4hphsK30B17IGFJdqharnn2P7H28B_g?e=nCqyAV) folder in the project's directory
 
 ### *** Examples ***
 
-### init N490 object and prepare network for year 2018 (some elements removed)
-pandas DataFrames are created: bus, gen, line, link, trafo and farms (wind farms)
+### init N490 object and prepare the network for the year 2018 (some elements removed)
+Pandas DataFrames are created: bus, gen, line, link, trafo and farms (wind farms)
 ```python
 from nordic490 import N490
 m = N490(year=2018) 
@@ -30,7 +30,7 @@ m.branch_params() # simple assumptions on R, X and B
 load, gen, link = m.get_measurements('20180120:18') # download data for a certain hour
 m.distribute_power(load, gen, link) # distribute on buses and gens (simple method)
 m.dcpf() # solve DC power flow
-m.compare_flows() # see how interarea flows compare with measurements
+m.compare_flows() # See how interarea flows compare with measurements
 ```
 
 ### Time series
@@ -47,11 +47,11 @@ plt.show()
 from nordic490 import N490, plt
 m = N490(year=2018,set_branch_params=True)
 m.time_series('20180101:00','20180107:23') # download one week of data + DCPF for each hour
-error = m.calculate_errors() # to calculate error in 'n'th timestep, pass n as argument  
+error = m.calculate_errors() # to calculate error in n'th timestep, pass n as argument  
 print(error)
 ```
 
-### Deafult network plots
+### Default network plots
 ```python
 from nordic490 import N490, plt
 m = N490(year=None,set_branch_params=True) # year=None -> read all data (also uc and dismantled)
@@ -69,7 +69,7 @@ load, gen, link = m.get_measurements('20180120:18')
 m.distribute_power(load,gen,link)
 m.dcpf()
 x = Map(m)
-x.init_plot() # init plot (set parameters and draw base map, mandatory)
+x.init_plot() # init plot (set parameters and draw the base map, mandatory)
 x.bus_name_fs = [7,0,0] # manually change layout parameters, see plot_settings() and set_map_properties()
 x.add_topo() # add network on map (mandatory)
 x.add_heatmap('angle') # parameter name or numpy vector allowed
@@ -86,8 +86,8 @@ y.show()
 
 #### Notes
 
-For installing all required packages automatically you can create and activate a 
-virtual environment and then execute:
+To install all required packages automatically, you can create and activate a 
+virtual environment and then execute the following:
 
 ```bash
 pip install -r requirements.txt
