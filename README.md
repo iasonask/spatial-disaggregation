@@ -9,7 +9,7 @@ This class can be used for:
 6) plotting
 7) export
 
-For using the N490 class, you need to extract the [Data](https://kth-my.sharepoint.com/:u:/g/personal/iasonas_ug_kth_se/EZlhYvvhLLFEvUU4hphsK30B17IGFJdqharnn2P7H28B_g?e=nCqyAV) folder in the project's directory
+For using the N490 class, you need to extract the [Data](https://uopel-my.sharepoint.com/:u:/g/personal/iasonask_office365_uop_gr/EUTapi8S6cpKrSNYlSjYANwBCZCWvR5XWQJjVo7tvotGUA?e=gX85Bm) folder in the project's directory
 
 ### *** Examples ***
 
